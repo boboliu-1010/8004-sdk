@@ -68,6 +68,22 @@ res = tx.wait_confirmed(timeout=180).result
 print(res.agentId, res.agentURI)
 ```
 
+### TRON Agent IDs
+
+When `chainId` is omitted, TRON registrations use a network-specific agent ID:
+
+| Network | Agent ID for token `123` |
+| --- | --- |
+| Nile | `3448148188:123` |
+| Mainnet | `728126428:123` |
+| Shasta | `2494104990:123` |
+
+Older SDK versions defaulted to `1:<tokenId>`. Existing persisted IDs are not
+rewritten automatically, so migrate storage keys, parsers, validators, and indexes
+to the network-specific format. You can pass `chainId=1` explicitly for temporary
+legacy compatibility, but that format is ambiguous across TRON networks and should
+not be used for new data.
+
 ## Core Flows
 
 ### Wallet Management

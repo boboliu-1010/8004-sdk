@@ -115,8 +115,23 @@ Edit in script:
 
 Expected output:
 - `tx_hash`
-- `agent_id` (format like `1:123`)
+- `agent_id` (for token ID `123`: Nile `3448148188:123`, Mainnet
+  `728126428:123`, or Shasta `2494104990:123`)
 - `agent_uri`
+
+TRON agent IDs use a network-specific chain ID when `chainId` is omitted:
+
+| Network | Agent ID example |
+| --- | --- |
+| Nile | `3448148188:123` |
+| Mainnet | `728126428:123` |
+| Shasta | `2494104990:123` |
+
+Migration note: older SDK versions defaulted to `1:<tokenId>`. Existing persisted
+IDs are not rewritten automatically; update stored keys, parsing, validation, and
+indexing to use the network-specific ID. Passing `chainId=1` explicitly preserves
+the legacy format temporarily, but it is ambiguous across TRON networks and is not
+recommended for new data.
 
 ## 5. Reputation Flows
 
