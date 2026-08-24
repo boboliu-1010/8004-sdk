@@ -610,9 +610,7 @@ class Agent:
         typed_data_chain_id = self.sdk.web3_client.chain_id
         if typed_data_chain_id is None:
             if is_tron:
-                network_name = (self.sdk.network or "").lower().strip()
-                if ":" in network_name:
-                    network_name = network_name.split(":", 1)[1]
+                network_name = getattr(self.sdk, "_tron_network_name", None)
                 typed_data_chain_id = TRON_EIP712_CHAIN_IDS.get(network_name)
             if typed_data_chain_id is None:
                 typed_data_chain_id = int(self.sdk.chainId)
