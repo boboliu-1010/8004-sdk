@@ -22,7 +22,6 @@ async function main() {
   console.log("BSC_WALLET", await bagent.getWallet());
 
   const tron = new SDK({
-    chainId: 1,
     network: process.env.TRON_NETWORK || "nile",
     rpcUrl: process.env.TRON_RPC_URL || "https://nile.trongrid.io",
     signer: tpk,

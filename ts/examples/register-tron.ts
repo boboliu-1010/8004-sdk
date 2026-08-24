@@ -3,7 +3,6 @@ import { SDK } from "../src/index.js";
 const PRIVATE_KEY = "<TRON_PRIVATE_KEY>";
 
 const sdk = new SDK({
-  chainId: 1,
   network: "nile",
   rpcUrl: "https://nile.trongrid.io",
   signer: PRIVATE_KEY,

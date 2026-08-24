@@ -19,14 +19,12 @@ if OWNER_PRIVATE_KEY.startswith("<") or REVIEWER_PRIVATE_KEY.startswith("<"):
     raise SystemExit("Set OWNER_PRIVATE_KEY and REVIEWER_PRIVATE_KEY in sample/tron_reputation_flow.py first")
 
 owner_sdk = SDK(
-    chainId=1,
     rpcUrl=TRON_RPC_URL,
     network=TRON_NETWORK,
     signer=OWNER_PRIVATE_KEY,
     feeLimit=TRON_FEE_LIMIT,
 )
 reviewer_sdk = SDK(
-    chainId=1,
     rpcUrl=TRON_RPC_URL,
     network=TRON_NETWORK,
     signer=REVIEWER_PRIVATE_KEY,

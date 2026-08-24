@@ -2,7 +2,7 @@ import chainsJson from "../../resource/chains.json" with { type: "json" };
 import { keccak256, toBytes, type Abi, type Hex } from "viem";
 
 import { Agent } from "./agent.js";
-import { EvmAdapter, resolveChainFromConfig, TronAdapter, type ChainAdapter } from "./chains.js";
+import { EvmAdapter, resolveChainFromConfig, TRON_CHAIN_IDS, TronAdapter, type ChainAdapter } from "./chains.js";
 import { TransactionHandle } from "./transaction-handle.js";
 import { getIdentityRegistryAbi, getReputationRegistryAbi, getValidationRegistryAbi } from "./contracts.js";
 import { SubgraphClient } from "./subgraph-client.js";
@@ -47,11 +47,6 @@ export class SDK {
   readonly subgraphClients: Map<number, SubgraphClient>;
   readonly ipfsUploader?: (json: string) => Promise<string>;
 
-  private static readonly TRON_EIP712_CHAIN_IDS: Record<string, number> = {
-    mainnet: 728126428,
-    nile: 3448148188,
-    shasta: 2494104990,
-  };
   private static readonly DEFAULT_SUBGRAPH_URLS: Record<number, string> = {
     56: "",
     97: "",
@@ -462,7 +457,7 @@ export class SDK {
   getTypedDataChainId(): number {
     if (this.chainType !== "tron") return this.chainId;
     const key = (this.network || "").toLowerCase().split(":").pop() || "nile";
-    return SDK.TRON_EIP712_CHAIN_IDS[key] ?? this.chainId;
+    return TRON_CHAIN_IDS[key] ?? this.chainId;
   }
 
   getSubgraphClient(chainId?: number): SubgraphClient | undefined {
