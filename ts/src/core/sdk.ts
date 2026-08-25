@@ -115,8 +115,7 @@ export class SDK {
   }
 
   async loadAgent(agentIdInput: string | number): Promise<Agent> {
-    const tokenId = this.parseAgentTokenId(agentIdInput);
-    const agentId = this.normalizeAgentId(agentIdInput);
+    const { tokenId, agentId } = this.parseAgentId(agentIdInput);
     const now = Math.floor(Date.now() / 1000);
 
     let summary: AgentSummary | undefined;
@@ -225,8 +224,8 @@ export class SDK {
   }
 
   async getAgentWallet(agentId: string | number): Promise<string | undefined> {
-    const id = typeof agentId === "number" ? BigInt(agentId) : BigInt(String(agentId).split(":").pop() as string);
-    const wallet = await this.chain.getAgentWallet(this.identityRegistry, this.identityRegistryAbi, id);
+    const { tokenId } = this.parseAgentId(agentId);
+    const wallet = await this.chain.getAgentWallet(this.identityRegistry, this.identityRegistryAbi, tokenId);
 
     if (!wallet) return undefined;
     const evm = this.chain.toEvmAddress(wallet).toLowerCase();
@@ -235,17 +234,31 @@ export class SDK {
     return this.chain.toChainAddress(wallet);
   }
 
-  private parseAgentTokenId(agentId: string | number): bigint {
-    if (typeof agentId === "number") return BigInt(agentId);
-    const token = String(agentId).split(":").pop();
-    if (!token) throw new Error(`Invalid agentId: ${agentId}`);
-    return BigInt(token);
-  }
+  private parseAgentId(agentIdInput: string | number): { tokenId: bigint; agentId: string } {
+    const input = String(agentIdInput).trim();
+    const parts = input.split(":");
+    let chainId = this.chainId;
+    let token = input;
 
-  private normalizeAgentId(agentId: string | number): string {
-    if (typeof agentId === "number") return `${this.chainId}:${agentId}`;
-    if (String(agentId).includes(":")) return String(agentId);
-    return `${this.chainId}:${agentId}`;
+    if (parts.length === 2) {
+      chainId = Number(parts[0]);
+      token = parts[1];
+    } else if (parts.length === 3 && parts[0].toLowerCase() === "eip155") {
+      chainId = Number(parts[1]);
+      token = parts[2];
+    } else if (parts.length !== 1) {
+      throw new Error(`Invalid agentId: ${agentIdInput}`);
+    }
+
+    if (!Number.isSafeInteger(chainId) || chainId !== this.chainId) {
+      throw new Error(
+        `Agent ID chain mismatch: agentId=${agentIdInput} targets chainId=${chainId}, SDK is configured for chainId=${this.chainId}`,
+      );
+    }
+    if (!token) throw new Error(`Invalid agentId: ${agentIdInput}`);
+
+    const tokenId = BigInt(token);
+    return { tokenId, agentId: `${this.chainId}:${tokenId}` };
   }
 
   private encodeFeedbackValue(value: number): { raw: bigint; decimals: number } {
@@ -262,8 +275,7 @@ export class SDK {
   }
 
   async giveFeedback(params: GiveFeedbackParams): Promise<TransactionHandle<{ agentId: string; reviewer: string; feedbackIndex: number }>> {
-    const tokenId = this.parseAgentTokenId(params.agentId);
-    const agentId = this.normalizeAgentId(params.agentId);
+    const { tokenId, agentId } = this.parseAgentId(params.agentId);
     const { raw, decimals } = this.encodeFeedbackValue(params.value);
     const reviewerChain = params.reviewerSigner
       ? (this.chainType === "evm"
@@ -302,8 +314,7 @@ export class SDK {
   }
 
   async getFeedback(agentIdInput: string | number, reviewerAddress: string, feedbackIndex: number): Promise<FeedbackRecord> {
-    const tokenId = this.parseAgentTokenId(agentIdInput);
-    const agentId = this.normalizeAgentId(agentIdInput);
+    const { tokenId, agentId } = this.parseAgentId(agentIdInput);
     const reviewer = this.chain.toChainAddress(reviewerAddress);
     const [valueRaw, valueDecimals, tag1, tag2, isRevoked] = await this.chain.readFeedback(
       this.reputationRegistry,
@@ -333,8 +344,7 @@ export class SDK {
     tag1 = "",
     tag2 = "",
   ): Promise<ReputationSummary> {
-    const tokenId = this.parseAgentTokenId(agentIdInput);
-    const agentId = this.normalizeAgentId(agentIdInput);
+    const { tokenId, agentId } = this.parseAgentId(agentIdInput);
     let clients = clientAddresses;
     if (!clients.length) {
       clients = await this.chain.getClients(
@@ -374,8 +384,7 @@ export class SDK {
   async appendResponse(
     params: AppendResponseParams,
   ): Promise<TransactionHandle<{ agentId: string; clientAddress: string; feedbackIndex: number }>> {
-    const tokenId = this.parseAgentTokenId(params.agentId);
-    const agentId = this.normalizeAgentId(params.agentId);
+    const { tokenId, agentId } = this.parseAgentId(params.agentId);
     const responseHash = this.toBytes32(params.responseHash, params.responseURI);
     const txHash = await this.chain.appendResponse(
       this.reputationRegistry,
@@ -397,8 +406,7 @@ export class SDK {
     agentIdInput: string | number,
     feedbackIndex: number,
   ): Promise<TransactionHandle<{ agentId: string; feedbackIndex: number }>> {
-    const tokenId = this.parseAgentTokenId(agentIdInput);
-    const agentId = this.normalizeAgentId(agentIdInput);
+    const { tokenId, agentId } = this.parseAgentId(agentIdInput);
     const txHash = await this.chain.revokeFeedback(
       this.reputationRegistry,
       this.reputationRegistryAbi,
@@ -409,8 +417,7 @@ export class SDK {
   }
 
   async validationRequest(params: ValidationRequestParams): Promise<TransactionHandle<{ requestHash: Hex; agentId: string }>> {
-    const tokenId = this.parseAgentTokenId(params.agentId);
-    const agentId = this.normalizeAgentId(params.agentId);
+    const { tokenId, agentId } = this.parseAgentId(params.agentId);
     const requestHash = this.toBytes32(params.requestHash, params.requestURI);
     const txHash = await this.chain.validationRequest(
       this.validationRegistry,

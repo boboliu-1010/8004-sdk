@@ -147,6 +147,7 @@ class SDK:
         # Initialize services
         self.indexer = AgentIndexer(
             web3_client=self.web3_client,
+            chain_id=self.chainId,
             store=indexingStore,
             embeddings=embeddings,
             subgraph_client=self.subgraph_client,
@@ -165,6 +166,7 @@ class SDK:
         self.feedback_manager = FeedbackManager(
             subgraph_client=self.subgraph_client,
             web3_client=self.web3_client,
+            chain_id=self.chainId,
             ipfs_client=self.ipfs_client,
             reputation_registry=reputation_registry,
             identity_registry=identity_registry,

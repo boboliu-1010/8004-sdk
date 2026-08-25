@@ -27,6 +27,7 @@ class FeedbackManager:
     def __init__(
         self,
         web3_client: Web3Client,
+        chain_id: int,
         ipfs_client: Optional[IPFSClient] = None,
         reputation_registry: Any = None,
         identity_registry: Any = None,
@@ -35,11 +36,37 @@ class FeedbackManager:
     ):
         """Initialize feedback manager."""
         self.web3_client = web3_client
+        self.chain_id = int(chain_id)
         self.ipfs_client = ipfs_client
         self.reputation_registry = reputation_registry
         self.identity_registry = identity_registry
         self.subgraph_client = subgraph_client
         self.indexer = indexer
+
+    def _parse_agent_id(self, agent_id: AgentId) -> tuple[int, AgentId]:
+        """Return the token ID and canonical ID for this manager's chain."""
+        value = str(agent_id).strip()
+        parts = value.split(":")
+        agent_chain_id = self.chain_id
+        token = value
+
+        if len(parts) == 2:
+            agent_chain_id = int(parts[0])
+            token = parts[1]
+        elif len(parts) == 3 and parts[0].lower() == "eip155":
+            agent_chain_id = int(parts[1])
+            token = parts[2]
+        elif len(parts) != 1:
+            raise ValueError(f"Invalid AgentId: {agent_id}")
+
+        if agent_chain_id != self.chain_id:
+            raise ValueError(
+                f"Chain mismatch: agentId={agent_id} targets chainId={agent_chain_id}, "
+                f"but SDK is configured for chainId={self.chain_id}."
+            )
+
+        token_id = int(token)
+        return token_id, f"{self.chain_id}:{token_id}"
 
     def prepareFeedbackFile(self, input: Dict[str, Any]) -> Dict[str, Any]:
         """Prepare an off-chain feedback file payload (no on-chain fields).
@@ -75,38 +102,7 @@ class FeedbackManager:
         feedbackFile: Optional[Dict[str, Any]] = None,
     ) -> TransactionHandle[Feedback]:
         """Give feedback (maps 8004 endpoint)."""
-        # Parse agentId into (chainId, tokenId)
-        agent_chain_id: Optional[int] = None
-        tokenId: int
-        if isinstance(agentId, str) and agentId.startswith("eip155:"):
-            parts = agentId.split(":")
-            if len(parts) != 3:
-                raise ValueError(f"Invalid AgentId (expected eip155:chainId:tokenId): {agentId}")
-            agent_chain_id = int(parts[1])
-            tokenId = int(parts[2])
-        elif isinstance(agentId, str) and ":" in agentId:
-            parts = agentId.split(":")
-            if len(parts) != 2:
-                raise ValueError(f"Invalid AgentId (expected chainId:tokenId): {agentId}")
-            agent_chain_id = int(parts[0])
-            tokenId = int(parts[1])
-        else:
-            tokenId = int(agentId)
-            # TRON client may not expose an EVM-style chain id.
-            current_chain_id = getattr(self.web3_client, "chain_id", None)
-            if current_chain_id is None:
-                agent_chain_id = 0
-            else:
-                agent_chain_id = int(current_chain_id)
-
-        # Ensure we are submitting the tx on the agent's chain
-        current_chain_id = getattr(self.web3_client, "chain_id", None)
-        if current_chain_id is not None and int(current_chain_id) != int(agent_chain_id):
-            raise ValueError(
-                f"Chain mismatch for giveFeedback: agentId={agentId} targets chainId={agent_chain_id}, "
-                f"but web3 client is connected to chainId={current_chain_id}. "
-                f"Initialize the SDK/Web3Client for chainId={agent_chain_id}."
-            )
+        tokenId, agentId = self._parse_agent_id(agentId)
         
         # Get client address (the one giving feedback)
         # Keep in checksum format for blockchain calls (web3.py requirement)
@@ -186,9 +182,9 @@ class FeedbackManager:
 
                 file_for_storage: Dict[str, Any] = {
                     # MUST fields (spec)
-                    "agentRegistry": f"eip155:{agent_chain_id}:{identity_registry_address}",
+                    "agentRegistry": f"eip155:{self.chain_id}:{identity_registry_address}",
                     "agentId": tokenId,
-                    "clientAddress": f"eip155:{agent_chain_id}:{clientAddress}",
+                    "clientAddress": f"eip155:{self.chain_id}:{clientAddress}",
                     "createdAt": created_at,
                     # On-chain fields (store raw+decimals for precision)
                     "value": int(value_raw),
@@ -263,6 +259,7 @@ class FeedbackManager:
         feedbackIndex: int,
     ) -> Feedback:
         """Get single feedback with responses from subgraph or blockchain."""
+        _, agentId = self._parse_agent_id(agentId)
         # Prefer subgraph/indexer for richer data, but fall back to chain when subgraph is behind
         if self.indexer and self.subgraph_client:
             try:
@@ -298,7 +295,7 @@ class FeedbackManager:
             feedback_id = f"{agentId}:{normalized_client_address}:{feedbackIndex}"
         else:
             # No chainId in agentId, prepend it
-            chain_id = str(self.web3_client.chain_id)
+            chain_id = str(self.chain_id)
             feedback_id = f"{chain_id}:{agentId}:{normalized_client_address}:{feedbackIndex}"
         
         try:
@@ -367,11 +364,7 @@ class FeedbackManager:
         feedbackIndex: int,
     ) -> Feedback:
         """Get feedback from blockchain (fallback)."""
-        # Parse agent ID
-        if ":" in agentId:
-            tokenId = int(agentId.split(":")[-1])
-        else:
-            tokenId = int(agentId)
+        tokenId, agentId = self._parse_agent_id(agentId)
         
         try:
             # Read from blockchain - new signature: readFeedback(agentId, clientAddress, feedbackIndex)
@@ -667,11 +660,7 @@ class FeedbackManager:
         feedbackIndex: int,
     ) -> TransactionHandle[Feedback]:
         """Revoke feedback."""
-        # Parse agent ID
-        if ":" in agentId:
-            tokenId = int(agentId.split(":")[-1])
-        else:
-            tokenId = int(agentId)
+        tokenId, agentId = self._parse_agent_id(agentId)
         
         clientAddress = self.web3_client.account.address
         
@@ -698,11 +687,7 @@ class FeedbackManager:
         response: Dict[str, Any],
     ) -> TransactionHandle[Feedback]:
         """Append a response/follow-up to existing feedback."""
-        # Parse agent ID
-        if ":" in agentId:
-            tokenId = int(agentId.split(":")[-1])
-        else:
-            tokenId = int(agentId)
+        tokenId, agentId = self._parse_agent_id(agentId)
         
         # Prepare response data
         responseUri = ""
@@ -743,13 +728,8 @@ class FeedbackManager:
         groupBy: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Get reputation summary for an agent with optional grouping."""
-        # Parse chainId from agentId
-        chain_id = None
-        if ":" in agentId:
-            try:
-                chain_id = int(agentId.split(":", 1)[0])
-            except ValueError:
-                chain_id = None
+        tokenId, agentId = self._parse_agent_id(agentId)
+        chain_id = self.chain_id
         
         # Try subgraph first (if available and indexer supports it)
         if self.indexer and self.subgraph_client:
@@ -757,15 +737,7 @@ class FeedbackManager:
             subgraph_client = None
             full_agent_id = agentId
             
-            if chain_id is not None:
-                subgraph_client = self.indexer._get_subgraph_client_for_chain(chain_id)
-            else:
-                # No chainId in agentId, use SDK's default
-                # Construct full agentId format for subgraph query
-                default_chain_id = self.web3_client.chain_id
-                token_id = agentId.split(":")[-1] if ":" in agentId else agentId
-                full_agent_id = f"{default_chain_id}:{token_id}"
-                subgraph_client = self.subgraph_client
+            subgraph_client = self.indexer._get_subgraph_client_for_chain(chain_id)
             
             if subgraph_client:
                 # Use subgraph to calculate reputation
@@ -775,19 +747,13 @@ class FeedbackManager:
         
         # Fallback to blockchain (requires chain-specific web3 client)
         # For now, only works if chain matches SDK's default
-        current_chain_id = getattr(self.web3_client, "chain_id", None)
-        if chain_id is not None and current_chain_id is not None and chain_id != current_chain_id:
+        current_chain_id = self.chain_id
+        if chain_id is not None and chain_id != current_chain_id:
             raise ValueError(
                 f"Blockchain reputation summary not supported for chain {chain_id}. "
                 f"SDK is configured for chain {current_chain_id}. "
                 f"Use subgraph-based summary instead."
             )
-        
-        # Parse agent ID for blockchain call
-        if ":" in agentId:
-            tokenId = int(agentId.split(":")[-1])
-        else:
-            tokenId = int(agentId)
         
         try:
             client_list = clientAddresses if clientAddresses else []

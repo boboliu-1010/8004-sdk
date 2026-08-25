@@ -23,6 +23,10 @@ class StubWeb3Client:
             return "0x0000000000000000000000000000000000000000"
         if method == "ownerOf":
             return "0x2222222222222222222222222222222222222222"
+        if method == "getClients":
+            return []
+        if method == "getSummary":
+            return (0, 0, 0)
         raise AssertionError(f"Unexpected contract call: {method}")
 
     def build_agent_wallet_set_typed_data(self, **kwargs):
@@ -84,6 +88,31 @@ def test_tron_alias_uses_nile_chain_id_for_wallet_typed_data(monkeypatch):
     )
 
     assert sdk.web3_client.captured_typed_data_chain_id == 3448148188
+
+
+def test_nile_feedback_rejects_mainnet_agent_id(monkeypatch):
+    monkeypatch.setattr(sdk_module, "Web3Client", StubWeb3Client)
+    sdk = sdk_module.SDK(network="nile", rpcUrl="http://unused.invalid")
+
+    with pytest.raises(ValueError, match="Chain mismatch.*728126428.*3448148188"):
+        sdk.giveFeedback("728126428:36", 1)
+
+
+def test_tron_services_receive_logical_chain_id(monkeypatch):
+    monkeypatch.setattr(sdk_module, "Web3Client", StubWeb3Client)
+    sdk = sdk_module.SDK(network="nile", rpcUrl="http://unused.invalid")
+
+    assert sdk.feedback_manager.chain_id == 3448148188
+    assert sdk.indexer.chain_id == 3448148188
+
+
+def test_unprefixed_tron_agent_id_is_canonicalized(monkeypatch):
+    monkeypatch.setattr(sdk_module, "Web3Client", StubWeb3Client)
+    sdk = sdk_module.SDK(network="nile", rpcUrl="http://unused.invalid")
+
+    summary = sdk.getReputationSummary("36")
+
+    assert summary["agentId"] == "3448148188:36"
 
 
 def test_unknown_tron_network_has_clear_error(monkeypatch):
