@@ -957,14 +957,14 @@ export function resolveChainFromConfig(chainsJson: any, network: string, chainId
   const n = (network || "").toLowerCase().trim();
 
   if (n === "nile" || n === "mainnet" || n === "shasta" || n.startsWith("tron")) {
-    const key = n.startsWith("tron:") ? n.split(":", 2)[1] : n;
+    const key = n === "tron" ? "nile" : n.startsWith("tron:") ? n.split(":", 2)[1] : n;
     const resolvedNetwork = key || "nile";
     const cfg = chainsJson.tron.networks[resolvedNetwork];
     if (!cfg) throw new Error(`Unknown TRON network: ${resolvedNetwork}`);
     return {
       chainType: "tron",
       resolvedNetwork,
-      resolvedChainId: chainId ?? 1,
+      resolvedChainId: chainId ?? TRON_CHAIN_IDS[resolvedNetwork],
       rpcUrl: rpcUrl || cfg.fullNode,
       contracts: cfg.contracts,
     };
@@ -988,3 +988,9 @@ export function resolveChainFromConfig(chainsJson: any, network: string, chainId
 
   throw new Error(`Unsupported network: ${network}. Supported: eip155:56/eip155:97, evm, bsc/mainnet/testnet, tron/nile/shasta/mainnet`);
 }
+
+export const TRON_CHAIN_IDS: Record<string, number> = {
+  mainnet: 728126428,
+  nile: 3448148188,
+  shasta: 2494104990,
+};

@@ -31,7 +31,6 @@ async function main() {
   }
 
   const tron = new SDK({
-    chainId: 1,
     network: process.env.TRON_NETWORK || "nile",
     rpcUrl: process.env.TRON_RPC_URL || "https://nile.trongrid.io",
     signer: tpk,

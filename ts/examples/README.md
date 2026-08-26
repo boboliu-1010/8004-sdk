@@ -77,6 +77,20 @@ const mined = await tx.waitConfirmed({ timeoutMs: 180_000 });
 console.log(mined.result.agentId, mined.result.agentURI);
 ```
 
+For TRON, the default agent ID identifies the selected network:
+
+| Network | Agent ID for token `123` |
+| --- | --- |
+| Nile | `3448148188:123` |
+| Mainnet | `728126428:123` |
+| Shasta | `2494104990:123` |
+
+Older SDK versions defaulted to `1:<tokenId>`. Existing persisted IDs are not
+rewritten automatically; migrate storage keys, parsers, validators, and indexes to
+the network-specific format. Passing `chainId: 1` explicitly preserves the legacy
+format temporarily, but it is ambiguous across TRON networks and is not recommended
+for new data.
+
 Field purpose:
 - `name`, `description`, `image`: base agent profile
 - `setMCP(url)`: MCP endpoint

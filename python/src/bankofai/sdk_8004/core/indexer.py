@@ -50,6 +50,7 @@ class AgentIndexer:
     def __init__(
         self,
         web3_client: Web3Client,
+        chain_id: int,
         store: Optional[Any] = None,
         embeddings: Optional[Any] = None,
         subgraph_client: Optional[Any] = None,
@@ -58,6 +59,7 @@ class AgentIndexer:
     ):
         """Initialize indexer with optional subgraph URL overrides for multiple chains."""
         self.web3_client = web3_client
+        self.chain_id = int(chain_id)
         self.store = store or self._create_default_store()
         self.embeddings = embeddings or self._create_default_embeddings()
         self.subgraph_client = subgraph_client
@@ -74,7 +76,7 @@ class AgentIndexer:
 
         # If default subgraph_client provided, cache it for current chain
         if self.subgraph_client:
-            self._subgraph_client_cache[self.web3_client.chain_id] = self.subgraph_client
+            self._subgraph_client_cache[self.chain_id] = self.subgraph_client
 
     def _create_default_store(self) -> Dict[str, Any]:
         """Create default in-memory store."""
@@ -243,7 +245,7 @@ class AgentIndexer:
         if ":" in agent_id:
             chain_id, token_id = agent_id.split(":", 1)
         else:
-            chain_id = self.web3_client.chain_id
+            chain_id = self.chain_id
             token_id = agent_id
 
         # Get basic agent data from contract
@@ -403,7 +405,7 @@ class AgentIndexer:
         else:
             # No chainId in agentId, use SDK's default
             # Construct full agentId format for subgraph query
-            default_chain_id = self.web3_client.chain_id
+            default_chain_id = self.chain_id
             full_agent_id = f"{default_chain_id}:{token_id}"
             subgraph_client = self.subgraph_client
         
@@ -511,7 +513,7 @@ class AgentIndexer:
 
         # Default behavior (keyword or not): query chain 1 + the SDK-initialized chainId.
         # Avoid looking into chain 1 twice if SDK is initialized with chainId=1.
-        default_chains = [1, int(self.web3_client.chain_id)]
+        default_chains = [1, self.chain_id]
         out: List[int] = []
         for cid in default_chains:
             if cid not in out:
@@ -1118,7 +1120,7 @@ class AgentIndexer:
         if ":" in agentId:
             feedback_id = f"{agentId}:{normalized_client_address}:{feedbackIndex}"
         else:
-            chain_id = str(self.web3_client.chain_id)
+            chain_id = str(self.chain_id)
             feedback_id = f"{chain_id}:{agentId}:{normalized_client_address}:{feedbackIndex}"
         
         try:
@@ -1261,7 +1263,7 @@ class AgentIndexer:
 
         # If we have agent ids but they weren't chain-prefixed, prefix them with default chain id for the subgraph.
         if merged_agents and chain_id is None:
-            default_chain_id = self.web3_client.chain_id
+            default_chain_id = self.chain_id
             normalized: List[AgentId] = []
             for aid in merged_agents:
                 if isinstance(aid, str) and ":" in aid:

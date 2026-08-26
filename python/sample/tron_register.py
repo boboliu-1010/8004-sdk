@@ -18,7 +18,6 @@ if TRON_PRIVATE_KEY.startswith("<"):
     raise SystemExit("Set TRON_PRIVATE_KEY in sample/tron_register.py first")
 
 sdk = SDK(
-    chainId=1,
     rpcUrl=TRON_RPC_URL,
     network=TRON_NETWORK,
     signer=TRON_PRIVATE_KEY,

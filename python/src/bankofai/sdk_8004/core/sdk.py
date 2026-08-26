@@ -20,7 +20,7 @@ from .contracts import (
     IDENTITY_REGISTRY_ABI, REPUTATION_REGISTRY_ABI, VALIDATION_REGISTRY_ABI,
     DEFAULT_REGISTRIES, DEFAULT_SUBGRAPH_URLS, TRON_DEFAULT_REGISTRIES
 )
-from .agent import Agent
+from .agent import Agent, TRON_EIP712_CHAIN_IDS
 from .indexer import AgentIndexer
 from .ipfs_client import IPFSClient
 from .feedback_manager import FeedbackManager
@@ -62,6 +62,7 @@ class SDK:
         self.feeLimit = int(feeLimit)
         self.signer = signer
         n = (network or "").lower().strip()
+        self._tron_network_name = None
         resolved_chain_id = int(chainId) if chainId is not None else None
         if n.startswith("eip155:"):
             try:
@@ -73,8 +74,14 @@ class SDK:
             resolved_chain_id = net_chain_id
         if n.startswith("tron:") or n in TRON_NETWORK_ALIASES:
             self.chain_type = "tron"
+            network_name = n.split(":", 1)[1] if ":" in n else n
+            if network_name in {"", "tron"}:
+                network_name = "nile"
+            if network_name not in TRON_EIP712_CHAIN_IDS:
+                raise ValueError(f"Unknown TRON network: {network_name}")
+            self._tron_network_name = network_name
             if resolved_chain_id is None:
-                resolved_chain_id = 1
+                resolved_chain_id = TRON_EIP712_CHAIN_IDS[network_name]
         else:
             self.chain_type = "evm"
             if resolved_chain_id is None:
@@ -140,6 +147,7 @@ class SDK:
         # Initialize services
         self.indexer = AgentIndexer(
             web3_client=self.web3_client,
+            chain_id=self.chainId,
             store=indexingStore,
             embeddings=embeddings,
             subgraph_client=self.subgraph_client,
@@ -158,6 +166,7 @@ class SDK:
         self.feedback_manager = FeedbackManager(
             subgraph_client=self.subgraph_client,
             web3_client=self.web3_client,
+            chain_id=self.chainId,
             ipfs_client=self.ipfs_client,
             reputation_registry=reputation_registry,
             identity_registry=identity_registry,
@@ -167,13 +176,7 @@ class SDK:
     def _resolve_registries(self) -> Dict[str, Address]:
         """Resolve registry addresses for current chain."""
         if self.chain_type == "tron":
-            network_name = "nile"
-            if self.network:
-                if ":" in self.network:
-                    network_name = self.network.split(":", 1)[1]
-                else:
-                    network_name = self.network
-            registries = TRON_DEFAULT_REGISTRIES.get(network_name, {}).copy()
+            registries = TRON_DEFAULT_REGISTRIES.get(self._tron_network_name, {}).copy()
         else:
             registries = DEFAULT_REGISTRIES.get(self.chainId, {}).copy()
 
