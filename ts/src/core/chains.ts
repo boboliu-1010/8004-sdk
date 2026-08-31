@@ -12,7 +12,7 @@ import {
   type WalletClient,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { bsc, bscTestnet } from "viem/chains";
+import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
 import { TronWeb } from "tronweb";
 
 import type { ChainContracts, ChainType, TxWaitOptions } from "../models/types.js";
@@ -132,13 +132,19 @@ export class EvmAdapter implements ChainAdapter {
 
   constructor(rpcUrl: string, chainId: number, signer?: string) {
     this.rpcUrl = rpcUrl;
-    const chain = chainId === 56 ? bsc : bscTestnet;
-    this.publicClient = createPublicClient({ chain, transport: http(rpcUrl) });
+    const chain = chainId === 56
+      ? bsc
+      : chainId === 97
+        ? bscTestnet
+        : chainId === 8453
+          ? base
+          : baseSepolia;
+    this.publicClient = createPublicClient({ chain, transport: http(rpcUrl) }) as unknown as PublicClient;
 
     if (signer) {
       const key = signer.startsWith("0x") ? (signer as Hex) : (`0x${signer}` as Hex);
       const account = privateKeyToAccount(key);
-      this.walletClient = createWalletClient({ account, chain, transport: http(rpcUrl) });
+      this.walletClient = createWalletClient({ account, chain, transport: http(rpcUrl) }) as unknown as WalletClient;
       this.signerAddress = account.address;
     }
   }
@@ -958,6 +964,24 @@ export function resolveChainFromConfig(chainsJson: any, network: string, chainId
   const eip155ChainId = eip155 ? Number(eip155[1]) : undefined;
   const finalChainId = eip155ChainId ?? chainId;
 
+  const baseAlias = n === "base" || n === "base:mainnet" || n === "base:sepolia";
+  const baseChainId = n === "base:sepolia" ? 84532 : baseAlias ? 8453 : undefined;
+  if (baseAlias || finalChainId === 8453 || finalChainId === 84532) {
+    if (chainId !== undefined && baseChainId !== undefined && chainId !== baseChainId) {
+      throw new Error(`chainId/network mismatch: chainId=${chainId}, network=${network} -> ${baseChainId}`);
+    }
+    const resolvedChainId = finalChainId ?? baseChainId ?? 8453;
+    const networkKey = resolvedChainId === 84532 ? "sepolia" : "mainnet";
+    const cfg = chainsJson.base.networks[networkKey];
+    return {
+      chainType: "evm",
+      resolvedNetwork: eip155ChainId ? `eip155:${resolvedChainId}` : `base:${networkKey}`,
+      resolvedChainId,
+      rpcUrl: rpcUrl || cfg.rpc,
+      contracts: cfg.contracts,
+    };
+  }
+
   if (n === "evm" || n.includes("bsc") || finalChainId === 56 || finalChainId === 97) {
     const resolvedNetwork = finalChainId === 56 ? "mainnet" : "testnet";
     const cfg = chainsJson.bsc.networks[resolvedNetwork];
@@ -970,7 +994,7 @@ export function resolveChainFromConfig(chainsJson: any, network: string, chainId
     };
   }
 
-  throw new Error(`Unsupported network: ${network}. Supported: eip155:56/eip155:97, evm, bsc/mainnet/testnet, tron/nile/shasta/mainnet`);
+  throw new Error(`Unsupported network: ${network}. Supported: Base/Base Sepolia, BSC/BSC Testnet, TRON Mainnet/Nile/Shasta`);
 }
 
 export const TRON_CHAIN_IDS: Record<string, number> = {

@@ -31,6 +31,38 @@
       }
     }
   },
+  "base": {
+    "name": "Base",
+    "type": "evm",
+    "networks": {
+      "mainnet": {
+        "name": "Base Mainnet",
+        "chainId": 8453,
+        "caip2": "eip155:8453",
+        "rpc": "https://mainnet.base.org",
+        "explorer": "https://basescan.org",
+        "contracts": {
+          "identityRegistry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+          "reputationRegistry": "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63",
+          "validationRegistry": "0x8004Cc8439f36fd5F9F049D9fF86523Df6dAAB58"
+        },
+        "note": "ERC-8004 on Base Mainnet"
+      },
+      "sepolia": {
+        "name": "Base Sepolia",
+        "chainId": 84532,
+        "caip2": "eip155:84532",
+        "rpc": "https://sepolia.base.org",
+        "explorer": "https://sepolia.basescan.org",
+        "contracts": {
+          "identityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+          "reputationRegistry": "0x8004B663056A597Dffe9eCcC1965A193B7388713",
+          "validationRegistry": "0x8004Cb1BF31DAf7788923b405b754f57acEB4272"
+        },
+        "note": "ERC-8004 on Base Sepolia"
+      }
+    }
+  },
   "tron": {
     "name": "TRON",
     "type": "tron",
