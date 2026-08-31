@@ -15,7 +15,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
 import { TronWeb } from "tronweb";
 
-import type { ChainContracts, ChainType, TxWaitOptions } from "../models/types.js";
+import type { ChainContracts, ChainType, MetadataEntry, TxWaitOptions } from "../models/types.js";
 
 const REGISTERED_EVENT = parseAbiItem("event Registered(uint256 indexed agentId, string agentURI, address indexed owner)");
 
@@ -24,9 +24,13 @@ export interface ChainAdapter {
   readonly rpcUrl: string;
   readonly signerAddress?: string;
 
-  registerAgent(identityRegistry: string, abi: Abi, agentURI: string): Promise<string>;
+  registerAgent(identityRegistry: string, abi: Abi, agentURI?: string, metadata?: MetadataEntry[]): Promise<string>;
   getAgentURI(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string>;
   getAgentWallet(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string>;
+  getMetadata(identityRegistry: string, abi: Abi, agentId: bigint, key: string): Promise<Hex>;
+  getApproved(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string>;
+  isApprovedForAll(identityRegistry: string, abi: Abi, owner: string, operator: string): Promise<boolean>;
+  approve(identityRegistry: string, abi: Abi, operator: string, agentId: bigint): Promise<string>;
   ownerOf(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string>;
   setAgentURI(identityRegistry: string, abi: Abi, agentId: bigint, agentURI: string): Promise<string>;
   setApprovalForAll(identityRegistry: string, abi: Abi, operator: string, approved: boolean): Promise<string>;
@@ -79,6 +83,23 @@ export interface ChainAdapter {
     agentId: bigint,
     clientAddress: string,
   ): Promise<bigint>;
+  readAllFeedback(
+    reputationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    clientAddresses: string[],
+    tag1: string,
+    tag2: string,
+    includeRevoked: boolean,
+  ): Promise<readonly [string[], bigint[], bigint[], number[], string[], string[], boolean[]]>;
+  getResponseCount(
+    reputationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    clientAddress: string,
+    feedbackIndex: bigint,
+    responders: string[],
+  ): Promise<bigint>;
   appendResponse(
     reputationRegistry: string,
     abi: Abi,
@@ -116,6 +137,15 @@ export interface ChainAdapter {
     abi: Abi,
     requestHash: Hex,
   ): Promise<readonly [string, bigint, number, Hex, string, bigint]>;
+  getValidationSummary(
+    validationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    validatorAddresses: string[],
+    tag: string,
+  ): Promise<readonly [bigint, number]>;
+  getAgentValidations(validationRegistry: string, abi: Abi, agentId: bigint): Promise<Hex[]>;
+  getValidatorRequests(validationRegistry: string, abi: Abi, validatorAddress: string): Promise<Hex[]>;
   waitForTransaction(txHash: string, opts?: TxWaitOptions): Promise<unknown>;
   parseRegisteredAgentId(receipt: unknown): string | undefined;
   toEvmAddress(address: string): string;
@@ -149,14 +179,19 @@ export class EvmAdapter implements ChainAdapter {
     }
   }
 
-  async registerAgent(identityRegistry: string, abi: Abi, agentURI: string): Promise<string> {
+  async registerAgent(identityRegistry: string, abi: Abi, agentURI?: string, metadata?: MetadataEntry[]): Promise<string> {
     if (!this.walletClient || !this.signerAddress) throw new Error("Signer is required for write operations");
 
+    const args = metadata !== undefined
+      ? [agentURI ?? "", metadata.map(({ metadataKey, metadataValue }) => ({ metadataKey, metadataValue }))]
+      : agentURI !== undefined
+        ? [agentURI]
+        : [];
     const hash = await (this.walletClient.writeContract as any)({
       address: identityRegistry as Hex,
       abi,
       functionName: "register",
-      args: [agentURI],
+      args,
       account: this.walletClient.account,
       chain: this.walletClient.chain,
     });
@@ -180,6 +215,45 @@ export class EvmAdapter implements ChainAdapter {
       functionName: "getAgentWallet",
       args: [agentId],
     }) as string;
+  }
+
+  async getMetadata(identityRegistry: string, abi: Abi, agentId: bigint, key: string): Promise<Hex> {
+    return await this.publicClient.readContract({
+      address: identityRegistry as Hex,
+      abi,
+      functionName: "getMetadata",
+      args: [agentId, key],
+    }) as Hex;
+  }
+
+  async getApproved(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string> {
+    return await this.publicClient.readContract({
+      address: identityRegistry as Hex,
+      abi,
+      functionName: "getApproved",
+      args: [agentId],
+    }) as string;
+  }
+
+  async isApprovedForAll(identityRegistry: string, abi: Abi, owner: string, operator: string): Promise<boolean> {
+    return await this.publicClient.readContract({
+      address: identityRegistry as Hex,
+      abi,
+      functionName: "isApprovedForAll",
+      args: [this.toChainAddress(owner), this.toChainAddress(operator)],
+    }) as boolean;
+  }
+
+  async approve(identityRegistry: string, abi: Abi, operator: string, agentId: bigint): Promise<string> {
+    if (!this.walletClient || !this.signerAddress) throw new Error("Signer is required for write operations");
+    return await (this.walletClient.writeContract as any)({
+      address: identityRegistry as Hex,
+      abi,
+      functionName: "approve",
+      args: [this.toChainAddress(operator), agentId],
+      account: this.walletClient.account,
+      chain: this.walletClient.chain,
+    });
   }
 
   async ownerOf(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string> {
@@ -353,6 +427,44 @@ export class EvmAdapter implements ChainAdapter {
     }) as bigint;
   }
 
+  async readAllFeedback(
+    reputationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    clientAddresses: string[],
+    tag1: string,
+    tag2: string,
+    includeRevoked: boolean,
+  ): Promise<readonly [string[], bigint[], bigint[], number[], string[], string[], boolean[]]> {
+    return await this.publicClient.readContract({
+      address: reputationRegistry as Hex,
+      abi,
+      functionName: "readAllFeedback",
+      args: [agentId, clientAddresses.map((x) => this.toChainAddress(x)), tag1, tag2, includeRevoked],
+    }) as readonly [string[], bigint[], bigint[], number[], string[], string[], boolean[]];
+  }
+
+  async getResponseCount(
+    reputationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    clientAddress: string,
+    feedbackIndex: bigint,
+    responders: string[],
+  ): Promise<bigint> {
+    return await this.publicClient.readContract({
+      address: reputationRegistry as Hex,
+      abi,
+      functionName: "getResponseCount",
+      args: [
+        agentId,
+        this.toChainAddress(clientAddress),
+        feedbackIndex,
+        responders.map((x) => this.toChainAddress(x)),
+      ],
+    }) as bigint;
+  }
+
   async appendResponse(
     reputationRegistry: string,
     abi: Abi,
@@ -440,6 +552,39 @@ export class EvmAdapter implements ChainAdapter {
       functionName: "getValidationStatus",
       args: [requestHash],
     }) as readonly [string, bigint, number, Hex, string, bigint];
+  }
+
+  async getValidationSummary(
+    validationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    validatorAddresses: string[],
+    tag: string,
+  ): Promise<readonly [bigint, number]> {
+    return await this.publicClient.readContract({
+      address: validationRegistry as Hex,
+      abi,
+      functionName: "getSummary",
+      args: [agentId, validatorAddresses.map((x) => this.toChainAddress(x)), tag],
+    }) as readonly [bigint, number];
+  }
+
+  async getAgentValidations(validationRegistry: string, abi: Abi, agentId: bigint): Promise<Hex[]> {
+    return await this.publicClient.readContract({
+      address: validationRegistry as Hex,
+      abi,
+      functionName: "getAgentValidations",
+      args: [agentId],
+    }) as Hex[];
+  }
+
+  async getValidatorRequests(validationRegistry: string, abi: Abi, validatorAddress: string): Promise<Hex[]> {
+    return await this.publicClient.readContract({
+      address: validationRegistry as Hex,
+      abi,
+      functionName: "getValidatorRequests",
+      args: [this.toChainAddress(validatorAddress)],
+    }) as Hex[];
   }
 
   async waitForTransaction(txHash: string, opts: TxWaitOptions = {}): Promise<unknown> {
@@ -571,12 +716,18 @@ export class TronAdapter implements ChainAdapter {
     ] as const;
   }
 
-  async registerAgent(identityRegistry: string, abi: Abi, agentURI: string): Promise<string> {
+  async registerAgent(identityRegistry: string, abi: Abi, agentURI?: string, metadata?: MetadataEntry[]): Promise<string> {
     if (!this.signerAddress) throw new Error("Signer is required for write operations");
 
     const contract = await this.tronWeb.contract(abi as any, identityRegistry);
-    const method = this.pickMethod(contract, abi, "register", 1);
-    const txid = await method(agentURI).send({ feeLimit: this.feeLimit });
+    const argCount = metadata !== undefined ? 2 : agentURI !== undefined ? 1 : 0;
+    const method = this.pickMethod(contract, abi, "register", argCount);
+    const args = metadata !== undefined
+      ? [agentURI ?? "", metadata.map(({ metadataKey, metadataValue }) => ({ metadataKey, metadataValue }))]
+      : agentURI !== undefined
+        ? [agentURI]
+        : [];
+    const txid = await method(...args).send({ feeLimit: this.feeLimit });
     return txid;
   }
 
@@ -592,6 +743,36 @@ export class TronAdapter implements ChainAdapter {
     const method = this.pickMethod(contract, abi, "getAgentWallet", 1);
     const out = await method(Number(agentId)).call({ from: this.readCaller });
     return String(out);
+  }
+
+  async getMetadata(identityRegistry: string, abi: Abi, agentId: bigint, key: string): Promise<Hex> {
+    const contract = await this.tronWeb.contract(abi as any, identityRegistry);
+    const method = this.pickMethod(contract, abi, "getMetadata", 2);
+    const out = await method(Number(agentId), key).call({ from: this.readCaller });
+    return String(out || "0x") as Hex;
+  }
+
+  async getApproved(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string> {
+    const contract = await this.tronWeb.contract(abi as any, identityRegistry);
+    const method = this.pickMethod(contract, abi, "getApproved", 1);
+    const out = await method(Number(agentId)).call({ from: this.readCaller });
+    return this.toChainAddress(String(out));
+  }
+
+  async isApprovedForAll(identityRegistry: string, abi: Abi, owner: string, operator: string): Promise<boolean> {
+    const contract = await this.tronWeb.contract(abi as any, identityRegistry);
+    const method = this.pickMethod(contract, abi, "isApprovedForAll", 2);
+    return Boolean(await method(
+      this.toChainAddress(owner),
+      this.toChainAddress(operator),
+    ).call({ from: this.readCaller }));
+  }
+
+  async approve(identityRegistry: string, abi: Abi, operator: string, agentId: bigint): Promise<string> {
+    if (!this.signerAddress) throw new Error("Signer is required for write operations");
+    const contract = await this.tronWeb.contract(abi as any, identityRegistry);
+    const method = this.pickMethod(contract, abi, "approve", 2);
+    return await method(Number(agentId), this.toChainAddress(operator)).send({ feeLimit: this.feeLimit });
   }
 
   async ownerOf(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string> {
@@ -757,6 +938,57 @@ export class TronAdapter implements ChainAdapter {
     return BigInt(out);
   }
 
+  async readAllFeedback(
+    reputationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    clientAddresses: string[],
+    tag1: string,
+    tag2: string,
+    includeRevoked: boolean,
+  ): Promise<readonly [string[], bigint[], bigint[], number[], string[], string[], boolean[]]> {
+    const contract = await this.tronWeb.contract(abi as any, reputationRegistry);
+    const method = this.pickMethod(contract, abi, "readAllFeedback", 5);
+    const out = await method(
+      Number(agentId),
+      clientAddresses.map((x) => this.toChainAddress(x)),
+      tag1,
+      tag2,
+      includeRevoked,
+    ).call({ from: this.readCaller });
+    const arr = Array.isArray(out)
+      ? out
+      : [out.clients, out.feedbackIndexes, out.values, out.valueDecimals, out.tag1s, out.tag2s, out.revokedStatuses];
+    return [
+      (arr[0] || []).map((x: unknown) => this.toChainAddress(String(x))),
+      (arr[1] || []).map((x: unknown) => this.toBigIntSafe(x, "feedbackIndex")),
+      (arr[2] || []).map((x: unknown) => this.toBigIntSafe(x, "value")),
+      (arr[3] || []).map(Number),
+      (arr[4] || []).map(String),
+      (arr[5] || []).map(String),
+      (arr[6] || []).map(Boolean),
+    ] as const;
+  }
+
+  async getResponseCount(
+    reputationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    clientAddress: string,
+    feedbackIndex: bigint,
+    responders: string[],
+  ): Promise<bigint> {
+    const contract = await this.tronWeb.contract(abi as any, reputationRegistry);
+    const method = this.pickMethod(contract, abi, "getResponseCount", 4);
+    const out = await method(
+      Number(agentId),
+      this.toChainAddress(clientAddress),
+      Number(feedbackIndex),
+      responders.map((x) => this.toChainAddress(x)),
+    ).call({ from: this.readCaller });
+    return this.toBigIntSafe(out, "responseCount");
+  }
+
   async appendResponse(
     reputationRegistry: string,
     abi: Abi,
@@ -857,6 +1089,38 @@ export class TronAdapter implements ChainAdapter {
       }
       throw error;
     }
+  }
+
+  async getValidationSummary(
+    validationRegistry: string,
+    abi: Abi,
+    agentId: bigint,
+    validatorAddresses: string[],
+    tag: string,
+  ): Promise<readonly [bigint, number]> {
+    const contract = await this.tronWeb.contract(abi as any, validationRegistry);
+    const method = this.pickMethod(contract, abi, "getSummary", 3);
+    const out = await method(
+      Number(agentId),
+      validatorAddresses.map((x) => this.toChainAddress(x)),
+      tag,
+    ).call({ from: this.readCaller });
+    const arr = Array.isArray(out) ? out : [out.count, out.avgResponse];
+    return [this.toBigIntSafe(arr[0], "count"), Number(arr[1])] as const;
+  }
+
+  async getAgentValidations(validationRegistry: string, abi: Abi, agentId: bigint): Promise<Hex[]> {
+    const contract = await this.tronWeb.contract(abi as any, validationRegistry);
+    const method = this.pickMethod(contract, abi, "getAgentValidations", 1);
+    const out = await method(Number(agentId)).call({ from: this.readCaller });
+    return Array.isArray(out) ? out.map(String) as Hex[] : [];
+  }
+
+  async getValidatorRequests(validationRegistry: string, abi: Abi, validatorAddress: string): Promise<Hex[]> {
+    const contract = await this.tronWeb.contract(abi as any, validationRegistry);
+    const method = this.pickMethod(contract, abi, "getValidatorRequests", 1);
+    const out = await method(this.toChainAddress(validatorAddress)).call({ from: this.readCaller });
+    return Array.isArray(out) ? out.map(String) as Hex[] : [];
   }
 
   async waitForTransaction(txHash: string, opts: TxWaitOptions = {}): Promise<unknown> {

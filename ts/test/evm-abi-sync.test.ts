@@ -34,6 +34,17 @@ test("Identity Registry uses the official ERC-721 approve and agent-wallet signa
   }));
 });
 
+test("Identity Registry supports all three official register overloads", () => {
+  const abi = evmAbis.identityRegistry as Abi;
+  assert.doesNotThrow(() => encodeFunctionData({ abi, functionName: "register", args: [] }));
+  assert.doesNotThrow(() => encodeFunctionData({ abi, functionName: "register", args: ["ipfs://agent"] }));
+  assert.doesNotThrow(() => encodeFunctionData({
+    abi,
+    functionName: "register",
+    args: ["ipfs://agent", [{ metadataKey: "agentName", metadataValue: "0x6167656e74" }]],
+  }));
+});
+
 test("Reputation Registry ResponseAppended includes the official response hash", () => {
   const event = findItem("reputationRegistry", "event", "ResponseAppended");
   assert.deepEqual(event.inputs?.map(({ type }) => type), [

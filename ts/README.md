@@ -2,7 +2,7 @@
 
 TypeScript SDK for agent identity, discovery, trust, and reputation based on 8004.
 
-This SDK provides a unified API for registration, wallet binding, feedback/reputation, and validation workflows.
+This SDK provides a unified API for registration, wallet binding, feedback/reputation, and validation workflows on Base, BNB Smart Chain, and TRON.
 
 ## What Does This SDK Do?
 
@@ -14,8 +14,8 @@ BankOfAI 8004 SDK enables you to:
 - Configure MCP/A2A endpoints, skills/domains, trust flags, metadata, and status
 - Manage ENS/profile update and endpoint cleanup (`setENS()`, `updateInfo()`, `removeEndpoint()`)
 - Manage verified wallet binding (`agent.getWallet()`, `agent.setWallet()`, `agent.unsetWallet()`)
-- Submit/read/manage feedback (`giveFeedback()`, `getFeedback()`, `searchFeedback()`, `appendResponse()`, `revokeFeedback()`, `getReputationSummary()`)
-- Run validation request/response flows (`validationRequest()`, `validationResponse()`, `getValidationStatus()`)
+- Submit/read/manage feedback (`giveFeedback()`, `getFeedback()`, `readAllFeedback()`, `appendResponse()`, `revokeFeedback()`, `getReputationSummary()`)
+- Run validation request/response flows (`validationRequest()`, `validationResponse()`, `getValidationStatus()`, `getValidationSummary()`)
 - Load and update registered agents (`loadAgent()`, `updateRegistration()`, `setAgentUri()`)
 - Transfer and operator management (`transfer()`, `addOperator()`, `removeOperator()`)
 
@@ -49,7 +49,7 @@ npm run build
 import { SDK } from "@bankofai/8004-sdk";
 
 const sdk = new SDK({
-  network: "<NETWORK_ID>", // e.g. eip155:97 or nile
+  network: "base", // Base mainnet; also supports base:sepolia, BSC, and TRON aliases
   rpcUrl: "<RPC_URL>",
   signer: "<PRIVATE_KEY>",
 });
@@ -70,6 +70,17 @@ const tx = await agent.register("https://example.com/agent-card.json");
 const mined = await tx.waitConfirmed({ timeoutMs: 180_000 });
 console.log(mined.result.agentId, mined.result.agentURI);
 ```
+
+### Base Networks
+
+| Network | Aliases | Chain ID | Agent ID for token `123` |
+| --- | --- | --- | --- |
+| Base Mainnet | `base`, `base:mainnet`, `eip155:8453` | `8453` | `8453:123` |
+| Base Sepolia | `base:sepolia`, `eip155:84532` | `84532` | `84532:123` |
+
+Base uses the official ERC-8004 CREATE2 Registry deployments. Agents registered
+on Base Mainnet can be discovered by ERC-8004 indexers such as 8004scan after
+their indexer processes the registration event and agent URI.
 
 ### TRON Agent IDs
 
@@ -127,8 +138,9 @@ await sdk.appendResponse({
   responseURI: "ipfs://QmResponse",
 });
 const summary = await sdk.getReputationSummary("<AGENT_ID>");
+const feedback = await sdk.readAllFeedback("<AGENT_ID>");
 const list = await sdk.searchFeedback({ agents: ["<AGENT_ID>"] });
-console.log(fb.result, summary);
+console.log(fb.result, summary, feedback);
 ```
 
 ### Agent Lifecycle

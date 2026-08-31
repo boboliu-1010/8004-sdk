@@ -15,6 +15,8 @@ import type {
   FeedbackRecord,
   FeedbackSummary,
   GiveFeedbackParams,
+  MetadataEntry,
+  OnChainFeedbackRecord,
   RegistrationFile,
   RegistrationResult,
   ReputationSummary,
@@ -24,6 +26,7 @@ import type {
   ValidationRequestParams,
   ValidationResponseParams,
   ValidationStatus,
+  ValidationSummary,
 } from "../models/types.js";
 
 export class SDK {
@@ -208,8 +211,8 @@ export class SDK {
     return await this.ipfsUploader(JSON.stringify(registrationFile, null, 2));
   }
 
-  async submitRegister(agentURI: string): Promise<TransactionHandle<RegistrationResult>> {
-    const txHash = await this.chain.registerAgent(this.identityRegistry, this.identityRegistryAbi, agentURI);
+  async submitRegister(agentURI?: string, metadata?: MetadataEntry[]): Promise<TransactionHandle<RegistrationResult>> {
+    const txHash = await this.chain.registerAgent(this.identityRegistry, this.identityRegistryAbi, agentURI, metadata);
     return new TransactionHandle<RegistrationResult>(
       txHash,
       this.chain,
@@ -217,7 +220,7 @@ export class SDK {
         const agentNum = this.chain.parseRegisteredAgentId(receipt);
         return {
           agentId: agentNum ? `${this.chainId}:${agentNum}` : undefined,
-          agentURI,
+          agentURI: agentURI ?? "",
         };
       },
     );
@@ -232,6 +235,34 @@ export class SDK {
     if (evm === "0x0000000000000000000000000000000000000000") return undefined;
     if (wallet.toLowerCase() === "t9yd14nj9j7xab4dbgeix9h8unkkhxuwwb") return undefined;
     return this.chain.toChainAddress(wallet);
+  }
+
+  async getAgentURI(agentId: string | number): Promise<string> {
+    const { tokenId } = this.parseAgentId(agentId);
+    return await this.chain.getAgentURI(this.identityRegistry, this.identityRegistryAbi, tokenId);
+  }
+
+  async getAgentOwner(agentId: string | number): Promise<string> {
+    const { tokenId } = this.parseAgentId(agentId);
+    const owner = await this.chain.ownerOf(this.identityRegistry, this.identityRegistryAbi, tokenId);
+    return this.chain.toChainAddress(owner);
+  }
+
+  async getMetadata(agentId: string | number, key: string): Promise<Hex> {
+    const { tokenId } = this.parseAgentId(agentId);
+    return await this.chain.getMetadata(this.identityRegistry, this.identityRegistryAbi, tokenId, key);
+  }
+
+  async getApproved(agentId: string | number): Promise<string | undefined> {
+    const { tokenId } = this.parseAgentId(agentId);
+    const approved = await this.chain.getApproved(this.identityRegistry, this.identityRegistryAbi, tokenId);
+    const evm = this.chain.toEvmAddress(approved).toLowerCase();
+    if (evm === "0x0000000000000000000000000000000000000000") return undefined;
+    return this.chain.toChainAddress(approved);
+  }
+
+  async isApprovedForAll(owner: string, operator: string): Promise<boolean> {
+    return await this.chain.isApprovedForAll(this.identityRegistry, this.identityRegistryAbi, owner, operator);
   }
 
   private parseAgentId(agentIdInput: string | number): { tokenId: bigint; agentId: string } {
@@ -338,6 +369,52 @@ export class SDK {
     };
   }
 
+  async readAllFeedback(
+    agentIdInput: string | number,
+    clientAddresses: string[] = [],
+    tag1 = "",
+    tag2 = "",
+    includeRevoked = false,
+  ): Promise<OnChainFeedbackRecord[]> {
+    const { tokenId, agentId } = this.parseAgentId(agentIdInput);
+    const [clients, indexes, values, decimals, tag1s, tag2s, revoked] = await this.chain.readAllFeedback(
+      this.reputationRegistry,
+      this.reputationRegistryAbi,
+      tokenId,
+      clientAddresses,
+      tag1,
+      tag2,
+      includeRevoked,
+    );
+    return clients.map((client, index) => ({
+      agentId,
+      reviewer: this.chain.toChainAddress(client),
+      feedbackIndex: Number(indexes[index]),
+      value: Number(values[index]) / (10 ** decimals[index]),
+      valueDecimals: decimals[index],
+      tag1: tag1s[index],
+      tag2: tag2s[index],
+      isRevoked: revoked[index],
+    }));
+  }
+
+  async getResponseCount(
+    agentIdInput: string | number,
+    clientAddress: string,
+    feedbackIndex: number,
+    responders: string[] = [],
+  ): Promise<bigint> {
+    const { tokenId } = this.parseAgentId(agentIdInput);
+    return await this.chain.getResponseCount(
+      this.reputationRegistry,
+      this.reputationRegistryAbi,
+      tokenId,
+      clientAddress,
+      BigInt(feedbackIndex),
+      responders,
+    );
+  }
+
   async getReputationSummary(
     agentIdInput: string | number,
     clientAddresses: string[] = [],
@@ -379,6 +456,22 @@ export class SDK {
       summaryValueDecimals,
       averageValue,
     };
+  }
+
+  async getClients(agentIdInput: string | number): Promise<string[]> {
+    const { tokenId } = this.parseAgentId(agentIdInput);
+    const clients = await this.chain.getClients(this.reputationRegistry, this.reputationRegistryAbi, tokenId);
+    return clients.map((client) => this.chain.toChainAddress(client));
+  }
+
+  async getLastIndex(agentIdInput: string | number, clientAddress: string): Promise<bigint> {
+    const { tokenId } = this.parseAgentId(agentIdInput);
+    return await this.chain.getLastIndex(
+      this.reputationRegistry,
+      this.reputationRegistryAbi,
+      tokenId,
+      clientAddress,
+    );
   }
 
   async appendResponse(
@@ -459,6 +552,35 @@ export class SDK {
       tag,
       lastUpdate: Number(lastUpdate),
     };
+  }
+
+  async getValidationSummary(
+    agentIdInput: string | number,
+    validatorAddresses: string[] = [],
+    tag = "",
+  ): Promise<ValidationSummary> {
+    const { tokenId, agentId } = this.parseAgentId(agentIdInput);
+    const [count, averageResponse] = await this.chain.getValidationSummary(
+      this.validationRegistry,
+      this.validationRegistryAbi,
+      tokenId,
+      validatorAddresses,
+      tag,
+    );
+    return { agentId, count: Number(count), averageResponse };
+  }
+
+  async getAgentValidations(agentIdInput: string | number): Promise<Hex[]> {
+    const { tokenId } = this.parseAgentId(agentIdInput);
+    return await this.chain.getAgentValidations(this.validationRegistry, this.validationRegistryAbi, tokenId);
+  }
+
+  async getValidatorRequests(validatorAddress: string): Promise<Hex[]> {
+    return await this.chain.getValidatorRequests(
+      this.validationRegistry,
+      this.validationRegistryAbi,
+      validatorAddress,
+    );
   }
 
   getTypedDataChainId(): number {

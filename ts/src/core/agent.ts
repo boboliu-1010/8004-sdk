@@ -1,7 +1,7 @@
 import { recoverTypedDataAddress, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-import type { RegistrationFile, RegistrationResult, SetWalletOptions } from "../models/types.js";
+import type { MetadataEntry, RegistrationFile, RegistrationResult, SetWalletOptions } from "../models/types.js";
 import type { SDK } from "./sdk.js";
 import { TransactionHandle } from "./transaction-handle.js";
 
@@ -159,16 +159,17 @@ export class Agent {
     return this.touch();
   }
 
-  async register(agentURI: string): Promise<TransactionHandle<RegistrationResult>> {
-    const tx = await this.sdk.submitRegister(agentURI);
+  async register(agentURI?: string, metadata?: MetadataEntry[]): Promise<TransactionHandle<RegistrationResult>> {
+    const resolvedAgentURI = agentURI ?? "";
+    const tx = await this.sdk.submitRegister(agentURI, metadata);
 
     return new TransactionHandle<RegistrationResult>(tx.txHash, this.sdk.chain, async (receipt) => {
       const parsed = this.sdk.chain.parseRegisteredAgentId(receipt);
       const resolved: RegistrationResult = {
-        agentURI,
+        agentURI: resolvedAgentURI,
         agentId: parsed ? `${this.sdk.chainId}:${parsed}` : undefined,
       };
-      this.registrationFile.agentURI = agentURI;
+      this.registrationFile.agentURI = resolvedAgentURI;
       this.registrationFile.agentId = resolved.agentId;
       this.touch();
       return resolved;
@@ -364,6 +365,18 @@ export class Agent {
       this.sdk.identityRegistryAbi,
       this.sdk.chain.toChainAddress(operator),
       true,
+    );
+    return new TransactionHandle<Agent>(txHash, this.sdk.chain, async () => this);
+  }
+
+  async approve(operator: string): Promise<TransactionHandle<Agent>> {
+    if (!this.registrationFile.agentId) throw new Error("Agent must be registered first");
+    const agentTokenId = BigInt(this.registrationFile.agentId.split(":").pop() as string);
+    const txHash = await this.sdk.chain.approve(
+      this.sdk.identityRegistry,
+      this.sdk.identityRegistryAbi,
+      this.sdk.chain.toChainAddress(operator),
+      agentTokenId,
     );
     return new TransactionHandle<Agent>(txHash, this.sdk.chain, async () => this);
   }
