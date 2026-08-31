@@ -18,22 +18,6 @@ import { TronWeb } from "tronweb";
 import type { ChainContracts, ChainType, TxWaitOptions } from "../models/types.js";
 
 const REGISTERED_EVENT = parseAbiItem("event Registered(uint256 indexed agentId, string agentURI, address indexed owner)");
-const VALIDATION_STATUS_ABI = [
-  {
-    inputs: [{ internalType: "bytes32", name: "requestHash", type: "bytes32" }],
-    name: "getValidationStatus",
-    outputs: [
-      { internalType: "address", name: "validatorAddress", type: "address" },
-      { internalType: "uint256", name: "agentId", type: "uint256" },
-      { internalType: "uint8", name: "response", type: "uint8" },
-      { internalType: "bytes32", name: "responseHash", type: "bytes32" },
-      { internalType: "string", name: "tag", type: "string" },
-      { internalType: "uint256", name: "lastUpdate", type: "uint256" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-] as const;
 
 export interface ChainAdapter {
   readonly chainType: ChainType;
@@ -441,12 +425,12 @@ export class EvmAdapter implements ChainAdapter {
 
   async getValidationStatus(
     validationRegistry: string,
-    _abi: Abi,
+    abi: Abi,
     requestHash: Hex,
   ): Promise<readonly [string, bigint, number, Hex, string, bigint]> {
     return await this.publicClient.readContract({
       address: validationRegistry as Hex,
-      abi: VALIDATION_STATUS_ABI as unknown as Abi,
+      abi,
       functionName: "getValidationStatus",
       args: [requestHash],
     }) as readonly [string, bigint, number, Hex, string, bigint];
