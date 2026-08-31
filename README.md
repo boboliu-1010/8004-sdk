@@ -47,6 +47,16 @@ Quick start and chain-specific examples:
 - `ts/README.md`
 - `ts/examples/README.md`
 
+## Development and releases
+
+The repository uses `develop` for normal integration and `main` for stable
+releases. Create ordinary work from `develop` and open `feature/*` pull
+requests back to `develop`. Package versions are updated only while preparing
+a release or hotfix.
+
+- [Contributing guide](./CONTRIBUTING.md)
+- [Branching and release workflow](./BRANCHING.md)
+
 ## Subgraph Status
 
 - `loadAgent(agentId)` works today via direct on-chain reads.
