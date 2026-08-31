@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Added the `develop` integration branch and enforced feature, release, and
+  hotfix pull request routes.
+- Documented synchronized TypeScript and Python version preparation on release
+  and hotfix branches.
+- Corrected the TypeScript lockfile package metadata to the existing `1.1.1`
+  package version.
+- Extended CI to `develop` and kept automatic Audit disabled by default while
+  preserving the authorized `/audit-pr` workflow.
+- Limited Audit archives to tracked, non-symbolic-link files.
+
 ## [1.1.1] - 2026-02-11
 
 ### Fixed
