@@ -2,7 +2,7 @@
 
 ## Goal
 
-Synchronize the SDK's EVM registry interfaces with the upstream
+Synchronize the TypeScript SDK's EVM registry interfaces with the upstream
 `erc-8004/erc-8004-contracts` ABIs at commit
 `b9e466c250744a7e06b13dff9d3c2844ed64f825`, without changing the existing
 TRON contracts, addresses, chain IDs, or adapter behavior.
@@ -10,12 +10,13 @@ TRON contracts, addresses, chain IDs, or adapter behavior.
 ## Scope
 
 This change updates the Identity, Reputation, and Validation Registry ABIs used
-by the Python and TypeScript EVM paths. It also removes the TypeScript
-Validation ABI workaround after the bundled ABI provides the official return
-shape.
+by the TypeScript EVM path. It also removes the TypeScript Validation ABI
+workaround after the bundled ABI provides the official return shape.
 
 The change does not add more EVM networks, change Registry addresses, alter the
-public SDK API, modify TRON ABIs, or begin CLI implementation.
+public SDK API, modify TRON ABIs, update the Python SDK, or begin CLI
+implementation. Python ABI synchronization is deferred to a separate change and
+does not block the TypeScript CLI.
 
 ## Upstream Source
 
@@ -46,9 +47,7 @@ standard ERC-721 and upgradeability interfaces. Keeping the complete ABI avoids
 future consumers receiving a different interface depending on whether they use
 the SDK resource or the upstream artifact.
 
-## Package Integration
-
-### TypeScript
+## TypeScript Package Integration
 
 `ts/resource/contract_abis.json` remains the runtime source. Only the
 `bsc.abi.identityRegistry`, `bsc.abi.reputationRegistry`, and
@@ -59,31 +58,25 @@ byte-for-byte.
 passed to `EvmAdapter.getValidationStatus()`. Its public tuple return type stays
 unchanged.
 
-### Python
-
-`python/src/bankofai/sdk_8004/core/contracts.py` keeps its existing exported
-constant names. The EVM constants are updated to the official signatures while
-TRON-specific behavior and Registry mappings remain unchanged. No new runtime
-file-loading dependency is introduced.
-
 ## Verification
 
-Tests validate ABI signatures rather than full JSON formatting. Both language
-suites assert the three known drift points and ensure the TRON ABI still exposes
-its existing Registry methods. TypeScript additionally exercises
+Tests validate ABI signatures rather than full JSON formatting. The TypeScript
+suite asserts the three known drift points and ensures the TRON ABI still
+exposes its existing Registry methods. It additionally exercises
 `getValidationStatus()` with the bundled ABI so removal of the workaround cannot
 silently restore the old return shape.
 
 The completion gate is:
 
-- Python Ruff and the complete Python test suite pass.
 - TypeScript tests, typecheck, and build pass.
 - A deterministic signature comparison reports no missing or altered official
   EVM functions/events for all three registries.
 - The TRON ABI portion of `contract_abis.json` is unchanged from the branch base.
+- No files under `python/` are modified.
 
 ## Release Impact
 
-This is a backward-compatible SDK patch. Existing public method signatures and
-contract addresses remain stable. The resulting SDK is suitable as the base for
-the planned BSC + TRON CLI.
+This is a backward-compatible TypeScript SDK patch. Existing public method
+signatures and contract addresses remain stable. The resulting TypeScript SDK is
+suitable as the base for the planned BSC + TRON CLI. The Python package version
+and contents remain unchanged.
