@@ -41,7 +41,7 @@ class TrustModel(Enum):
 @dataclass
 class Endpoint:
     """Represents an agent endpoint."""
-    type: EndpointType
+    type: Union[EndpointType, str]
     value: str  # endpoint value (URL, name, DID, ENS)
     meta: Dict[str, Any] = field(default_factory=dict)  # optional metadata
 
@@ -64,6 +64,7 @@ class RegistrationFile:
     x402support: bool = False  # Binary flag for x402 payment support
     metadata: Dict[str, Any] = field(default_factory=dict)  # arbitrary, SDK-managed
     updatedAt: Timestamp = field(default_factory=lambda: int(datetime.now().timestamp()))
+    registrations: List[Dict[str, Any]] = field(default_factory=list)
 
     def __str__(self) -> str:
         """String representation as JSON."""
@@ -82,7 +83,7 @@ class RegistrationFile:
         endpoints = []
         for endpoint in self.endpoints:
             endpoint_dict = {
-                "name": endpoint.type.value,
+                "name": endpoint.type.value if isinstance(endpoint.type, EndpointType) else endpoint.type,
                 "endpoint": endpoint.value,
                 **endpoint.meta
             }
@@ -92,8 +93,8 @@ class RegistrationFile:
         # It's now a reserved on-chain metadata key managed via Agent.setWallet().
         
         # Build registrations array
-        registrations = []
-        if self.agentId:
+        registrations = [dict(registration) for registration in self.registrations]
+        if not registrations and self.agentId:
             agent_id_int = int(self.agentId.split(":")[-1]) if ":" in self.agentId else int(self.agentId)
             agent_registry = f"eip155:{chain_id}:{identity_registry_address}" if chain_id and identity_registry_address else "eip155:1:{identityRegistry}"
             registrations.append({
@@ -126,7 +127,10 @@ class RegistrationFile:
                 # Skip agentWallet endpoints as they're handled separately via walletAddress field
                 continue
             
-            ep_type = EndpointType(name)
+            try:
+                ep_type: Union[EndpointType, str] = EndpointType(name)
+            except ValueError:
+                ep_type = name
             ep_value = ep_data["endpoint"]
             ep_meta = {k: v for k, v in ep_data.items() if k not in ["name", "endpoint"]}
             endpoints.append(Endpoint(type=ep_type, value=ep_value, meta=ep_meta))
@@ -147,6 +151,7 @@ class RegistrationFile:
             walletAddress=data.get("walletAddress"),
             walletChainId=data.get("walletChainId"),
             endpoints=endpoints,
+            registrations=[dict(registration) for registration in (data.get("registrations") or [])],
             trustModels=trust_models,
             active=data.get("active", False),
             x402support=data.get("x402Support", data.get("x402support", False)),  # Handle both camelCase and lowercase

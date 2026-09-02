@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Aligned Python and TypeScript parsing and serialization of ERC-8004
+  `registration-v1` files, including extensible services, registrations, and
+  the canonical `x402Support` field.
+
 ### Changed
 
 - Added the `develop` integration branch and enforced feature, release, and
