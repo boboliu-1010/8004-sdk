@@ -1,0 +1,34 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Cross-SDK Fixture Agent",
+  "description": "Exercises canonical registration-v1 wire fields.",
+  "image": "https://example.test/agent.png",
+  "services": [
+    {
+      "name": "MCP",
+      "endpoint": "https://example.test/mcp",
+      "version": "2025-06-18"
+    },
+    {
+      "name": "web",
+      "endpoint": "https://example.test"
+    },
+    {
+      "name": "email",
+      "endpoint": "agent@example.test"
+    }
+  ],
+  "registrations": [
+    {
+      "agentId": 7,
+      "agentRegistry": "eip155:1:0x1234567890123456789012345678901234567890"
+    }
+  ],
+  "supportedTrust": [
+    "reputation",
+    "custom-trust"
+  ],
+  "active": true,
+  "x402Support": true,
+  "updatedAt": 1735689600
+}
