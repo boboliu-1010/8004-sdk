@@ -4,6 +4,10 @@ TypeScript SDK for agent identity, discovery, trust, and reputation based on 800
 
 This SDK provides a unified API for registration, wallet binding, feedback/reputation, and validation workflows on Base, BNB Smart Chain, and TRON.
 
+The EVM and TRON adapters use the same official Registry v2 business ABI. The
+TRON adapter handles TVM addresses and transaction signing without changing the
+public Registry API.
+
 ## What Does This SDK Do?
 
 BankOfAI 8004 SDK enables you to:

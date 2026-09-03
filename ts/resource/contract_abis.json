@@ -2287,6 +2287,157 @@
     "abi": {
       "identityRegistry": [
         {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            }
+          ],
+          "name": "AddressEmptyCode",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "ECDSAInvalidSignature",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "length",
+              "type": "uint256"
+            }
+          ],
+          "name": "ECDSAInvalidSignatureLength",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "s",
+              "type": "bytes32"
+            }
+          ],
+          "name": "ECDSAInvalidSignatureS",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "ERC1967InvalidImplementation",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "ERC1967NonPayable",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "name": "ERC721IncorrectOwner",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "ERC721InsufficientApproval",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "approver",
+              "type": "address"
+            }
+          ],
+          "name": "ERC721InvalidApprover",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            }
+          ],
+          "name": "ERC721InvalidOperator",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "name": "ERC721InvalidOwner",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "receiver",
+              "type": "address"
+            }
+          ],
+          "name": "ERC721InvalidReceiver",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "sender",
+              "type": "address"
+            }
+          ],
+          "name": "ERC721InvalidSender",
+          "type": "error"
+        },
+        {
           "inputs": [
             {
               "internalType": "uint256",
@@ -2294,12 +2445,309 @@
               "type": "uint256"
             }
           ],
-          "name": "ownerOf",
-          "outputs": [
+          "name": "ERC721NonexistentToken",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "FailedCall",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "InvalidInitialization",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotInitializing",
+          "type": "error"
+        },
+        {
+          "inputs": [
             {
               "internalType": "address",
-              "name": "",
+              "name": "owner",
               "type": "address"
+            }
+          ],
+          "name": "OwnableInvalidOwner",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "name": "OwnableUnauthorizedAccount",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "UUPSUnauthorizedCallContext",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "slot",
+              "type": "bytes32"
+            }
+          ],
+          "name": "UUPSUnsupportedProxiableUUID",
+          "type": "error"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "approved",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "Approval",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool"
+            }
+          ],
+          "name": "ApprovalForAll",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_fromTokenId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_toTokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "BatchMetadataUpdate",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [],
+          "name": "EIP712DomainChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "version",
+              "type": "uint64"
+            }
+          ],
+          "name": "Initialized",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "internalType": "string",
+              "name": "indexedMetadataKey",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "metadataKey",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes",
+              "name": "metadataValue",
+              "type": "bytes"
+            }
+          ],
+          "name": "MetadataSet",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "_tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "MetadataUpdate",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "agentURI",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "name": "Registered",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "Transfer",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "newURI",
+              "type": "string"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "updatedBy",
+              "type": "address"
+            }
+          ],
+          "name": "URIUpdated",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "Upgraded",
+          "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "UPGRADE_INTERFACE_VERSION",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
             }
           ],
           "stateMutability": "view",
@@ -2309,21 +2757,96 @@
           "inputs": [
             {
               "internalType": "address",
-              "name": "owner",
+              "name": "to",
               "type": "address"
             },
             {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "approve",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
               "internalType": "address",
-              "name": "operator",
+              "name": "owner",
               "type": "address"
             }
           ],
-          "name": "isApprovedForAll",
+          "name": "balanceOf",
           "outputs": [
             {
-              "internalType": "bool",
+              "internalType": "uint256",
               "name": "",
-              "type": "bool"
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "eip712Domain",
+          "outputs": [
+            {
+              "internalType": "bytes1",
+              "name": "fields",
+              "type": "bytes1"
+            },
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "version",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "chainId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "verifyingContract",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "extensions",
+              "type": "uint256[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            }
+          ],
+          "name": "getAgentWallet",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
             }
           ],
           "stateMutability": "view",
@@ -2351,22 +2874,43 @@
         {
           "inputs": [
             {
-              "internalType": "address",
-              "name": "from",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-            },
-            {
               "internalType": "uint256",
-              "name": "tokenId",
+              "name": "agentId",
               "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "metadataKey",
+              "type": "string"
             }
           ],
-          "name": "transferFrom",
+          "name": "getMetadata",
+          "outputs": [
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getVersion",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "initialize",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -2375,47 +2919,29 @@
           "inputs": [
             {
               "internalType": "address",
-              "name": "to",
+              "name": "owner",
               "type": "address"
             },
             {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            }
+          ],
+          "name": "isApprovedForAll",
+          "outputs": [
+            {
               "internalType": "bool",
-              "name": "approved",
+              "name": "",
               "type": "bool"
             }
           ],
-          "name": "setApprovalForAll",
-          "outputs": [],
-          "stateMutability": "nonpayable",
+          "stateMutability": "view",
           "type": "function"
         },
         {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "to",
-              "type": "address"
-            }
-          ],
-          "name": "approve",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "tokenId",
-              "type": "uint256"
-            }
-          ],
-          "name": "tokenURI",
+          "inputs": [],
+          "name": "name",
           "outputs": [
             {
               "internalType": "string",
@@ -2427,44 +2953,52 @@
           "type": "function"
         },
         {
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "inputs": [
             {
               "internalType": "uint256",
               "name": "tokenId",
               "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "_tokenURI",
-              "type": "string"
             }
           ],
-          "name": "setTokenURI",
-          "outputs": [],
-          "stateMutability": "nonpayable",
+          "name": "ownerOf",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
           "type": "function"
         },
         {
           "inputs": [],
-          "name": "register",
+          "name": "proxiableUUID",
           "outputs": [
             {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
             }
           ],
-          "stateMutability": "nonpayable",
+          "stateMutability": "view",
           "type": "function"
         },
         {
-          "inputs": [
-            {
-              "internalType": "string",
-              "name": "agentURI",
-              "type": "string"
-            }
-          ],
+          "inputs": [],
           "name": "register",
           "outputs": [
             {
@@ -2487,16 +3021,16 @@
               "components": [
                 {
                   "internalType": "string",
-                  "name": "key",
+                  "name": "metadataKey",
                   "type": "string"
                 },
                 {
                   "internalType": "bytes",
-                  "name": "value",
+                  "name": "metadataValue",
                   "type": "bytes"
                 }
               ],
-              "internalType": "struct IdentityRegistry.MetadataEntry[]",
+              "internalType": "struct IdentityRegistryUpgradeable.MetadataEntry[]",
               "name": "metadata",
               "type": "tuple[]"
             }
@@ -2515,46 +3049,76 @@
         {
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
               "internalType": "string",
-              "name": "key",
+              "name": "agentURI",
               "type": "string"
             }
           ],
-          "name": "getMetadata",
+          "name": "register",
           "outputs": [
             {
-              "internalType": "bytes",
-              "name": "",
-              "type": "bytes"
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
             }
           ],
-          "stateMutability": "view",
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "renounceOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
           "inputs": [
             {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
               "internalType": "uint256",
-              "name": "agentId",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "safeTransferFrom",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
               "type": "uint256"
             },
             {
-              "internalType": "string",
-              "name": "key",
-              "type": "string"
-            },
-            {
               "internalType": "bytes",
-              "name": "value",
+              "name": "data",
               "type": "bytes"
             }
           ],
-          "name": "setMetadata",
+          "name": "safeTransferFrom",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
@@ -2575,25 +3139,6 @@
           "name": "setAgentURI",
           "outputs": [],
           "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            }
-          ],
-          "name": "getAgentWallet",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -2627,6 +3172,134 @@
         {
           "inputs": [
             {
+              "internalType": "address",
+              "name": "operator",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "approved",
+              "type": "bool"
+            }
+          ],
+          "name": "setApprovalForAll",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "metadataKey",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes",
+              "name": "metadataValue",
+              "type": "bytes"
+            }
+          ],
+          "name": "setMetadata",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "symbol",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "tokenURI",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "from",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenId",
+              "type": "uint256"
+            }
+          ],
+          "name": "transferFrom",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "transferOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
               "internalType": "uint256",
               "name": "agentId",
               "type": "uint256"
@@ -2638,29 +3311,109 @@
           "type": "function"
         },
         {
-          "anonymous": false,
           "inputs": [
             {
-              "indexed": true,
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
             },
             {
-              "indexed": false,
-              "internalType": "string",
-              "name": "agentURI",
-              "type": "string"
-            },
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "upgradeToAndCall",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        }
+      ],
+      "reputationRegistry": [
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [
             {
-              "indexed": true,
+              "internalType": "address",
+              "name": "target",
+              "type": "address"
+            }
+          ],
+          "name": "AddressEmptyCode",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "ERC1967InvalidImplementation",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "ERC1967NonPayable",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "FailedCall",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "InvalidInitialization",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotInitializing",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
               "internalType": "address",
               "name": "owner",
               "type": "address"
             }
           ],
-          "name": "Registered",
-          "type": "event"
+          "name": "OwnableInvalidOwner",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "name": "OwnableUnauthorizedAccount",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "UUPSUnauthorizedCallContext",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "slot",
+              "type": "bytes32"
+            }
+          ],
+          "name": "UUPSUnsupportedProxiableUUID",
+          "type": "error"
         },
         {
           "anonymous": false,
@@ -2670,21 +3423,34 @@
               "internalType": "uint256",
               "name": "agentId",
               "type": "uint256"
-            },
-            {
-              "indexed": false,
-              "internalType": "string",
-              "name": "newURI",
-              "type": "string"
             },
             {
               "indexed": true,
               "internalType": "address",
-              "name": "updatedBy",
+              "name": "clientAddress",
               "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "uint64",
+              "name": "feedbackIndex",
+              "type": "uint64"
             }
           ],
-          "name": "URIUpdated",
+          "name": "FeedbackRevoked",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "version",
+              "type": "uint64"
+            }
+          ],
+          "name": "Initialized",
           "type": "event"
         },
         {
@@ -2698,28 +3464,208 @@
             },
             {
               "indexed": true,
-              "internalType": "string",
-              "name": "indexedKey",
-              "type": "string"
+              "internalType": "address",
+              "name": "clientAddress",
+              "type": "address"
             },
             {
               "indexed": false,
-              "internalType": "string",
-              "name": "key",
-              "type": "string"
+              "internalType": "uint64",
+              "name": "feedbackIndex",
+              "type": "uint64"
             },
             {
               "indexed": false,
-              "internalType": "bytes",
+              "internalType": "int128",
               "name": "value",
-              "type": "bytes"
+              "type": "int128"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint8",
+              "name": "valueDecimals",
+              "type": "uint8"
+            },
+            {
+              "indexed": true,
+              "internalType": "string",
+              "name": "indexedTag1",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "tag1",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "tag2",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "endpoint",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "feedbackURI",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "feedbackHash",
+              "type": "bytes32"
             }
           ],
-          "name": "MetadataSet",
+          "name": "NewFeedback",
           "type": "event"
-        }
-      ],
-      "reputationRegistry": [
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "clientAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint64",
+              "name": "feedbackIndex",
+              "type": "uint64"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "responder",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "responseURI",
+              "type": "string"
+            },
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "responseHash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "ResponseAppended",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "Upgraded",
+          "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "UPGRADE_INTERFACE_VERSION",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "clientAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint64",
+              "name": "feedbackIndex",
+              "type": "uint64"
+            },
+            {
+              "internalType": "string",
+              "name": "responseURI",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "responseHash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "appendResponse",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            }
+          ],
+          "name": "getClients",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
         {
           "inputs": [],
           "name": "getIdentityRegistry",
@@ -2731,6 +3677,121 @@
             }
           ],
           "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "clientAddress",
+              "type": "address"
+            }
+          ],
+          "name": "getLastIndex",
+          "outputs": [
+            {
+              "internalType": "uint64",
+              "name": "",
+              "type": "uint64"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "clientAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint64",
+              "name": "feedbackIndex",
+              "type": "uint64"
+            },
+            {
+              "internalType": "address[]",
+              "name": "responders",
+              "type": "address[]"
+            }
+          ],
+          "name": "getResponseCount",
+          "outputs": [
+            {
+              "internalType": "uint64",
+              "name": "count",
+              "type": "uint64"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address[]",
+              "name": "clientAddresses",
+              "type": "address[]"
+            },
+            {
+              "internalType": "string",
+              "name": "tag1",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "tag2",
+              "type": "string"
+            }
+          ],
+          "name": "getSummary",
+          "outputs": [
+            {
+              "internalType": "uint64",
+              "name": "count",
+              "type": "uint64"
+            },
+            {
+              "internalType": "int128",
+              "name": "summaryValue",
+              "type": "int128"
+            },
+            {
+              "internalType": "uint8",
+              "name": "summaryValueDecimals",
+              "type": "uint8"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getVersion",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "pure",
           "type": "function"
         },
         {
@@ -2784,166 +3845,37 @@
         {
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint64",
-              "name": "feedbackIndex",
-              "type": "uint64"
+              "internalType": "address",
+              "name": "identityRegistry_",
+              "type": "address"
             }
           ],
-          "name": "revokeFeedback",
+          "name": "initialize",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
         },
         {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
             {
               "internalType": "address",
-              "name": "clientAddress",
+              "name": "",
               "type": "address"
-            },
-            {
-              "internalType": "uint64",
-              "name": "feedbackIndex",
-              "type": "uint64"
-            },
-            {
-              "internalType": "string",
-              "name": "responseURI",
-              "type": "string"
-            },
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "proxiableUUID",
+          "outputs": [
             {
               "internalType": "bytes32",
-              "name": "responseHash",
-              "type": "bytes32"
-            }
-          ],
-          "name": "appendResponse",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "clientAddress",
-              "type": "address"
-            }
-          ],
-          "name": "getLastIndex",
-          "outputs": [
-            {
-              "internalType": "uint64",
               "name": "",
-              "type": "uint64"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "clientAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "uint64",
-              "name": "feedbackIndex",
-              "type": "uint64"
-            }
-          ],
-          "name": "readFeedback",
-          "outputs": [
-            {
-              "internalType": "int128",
-              "name": "value",
-              "type": "int128"
-            },
-            {
-              "internalType": "uint8",
-              "name": "valueDecimals",
-              "type": "uint8"
-            },
-            {
-              "internalType": "string",
-              "name": "tag1",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "tag2",
-              "type": "string"
-            },
-            {
-              "internalType": "bool",
-              "name": "isRevoked",
-              "type": "bool"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address[]",
-              "name": "clientAddresses",
-              "type": "address[]"
-            },
-            {
-              "internalType": "string",
-              "name": "tag1",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "tag2",
-              "type": "string"
-            }
-          ],
-          "name": "getSummary",
-          "outputs": [
-            {
-              "internalType": "uint64",
-              "name": "count",
-              "type": "uint64"
-            },
-            {
-              "internalType": "int128",
-              "name": "summaryValue",
-              "type": "int128"
-            },
-            {
-              "internalType": "uint8",
-              "name": "summaryValueDecimals",
-              "type": "uint8"
+              "type": "bytes32"
             }
           ],
           "stateMutability": "view",
@@ -3024,25 +3956,6 @@
               "internalType": "uint256",
               "name": "agentId",
               "type": "uint256"
-            }
-          ],
-          "name": "getClients",
-          "outputs": [
-            {
-              "internalType": "address[]",
-              "name": "",
-              "type": "address[]"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
             },
             {
               "internalType": "address",
@@ -3053,384 +3966,226 @@
               "internalType": "uint64",
               "name": "feedbackIndex",
               "type": "uint64"
-            },
-            {
-              "internalType": "address[]",
-              "name": "responders",
-              "type": "address[]"
             }
           ],
-          "name": "getResponseCount",
+          "name": "readFeedback",
           "outputs": [
             {
-              "internalType": "uint64",
-              "name": "count",
-              "type": "uint64"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "anonymous": false,
-          "inputs": [
-            {
-              "indexed": true,
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "indexed": true,
-              "internalType": "address",
-              "name": "clientAddress",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "uint64",
-              "name": "feedbackIndex",
-              "type": "uint64"
-            },
-            {
-              "indexed": false,
               "internalType": "int128",
               "name": "value",
               "type": "int128"
             },
             {
-              "indexed": false,
               "internalType": "uint8",
               "name": "valueDecimals",
               "type": "uint8"
             },
             {
-              "indexed": true,
-              "internalType": "string",
-              "name": "indexedTag1",
-              "type": "string"
-            },
-            {
-              "indexed": false,
               "internalType": "string",
               "name": "tag1",
               "type": "string"
             },
             {
-              "indexed": false,
               "internalType": "string",
               "name": "tag2",
               "type": "string"
             },
             {
-              "indexed": false,
-              "internalType": "string",
-              "name": "endpoint",
-              "type": "string"
-            },
-            {
-              "indexed": false,
-              "internalType": "string",
-              "name": "feedbackURI",
-              "type": "string"
-            },
-            {
-              "indexed": false,
-              "internalType": "bytes32",
-              "name": "feedbackHash",
-              "type": "bytes32"
+              "internalType": "bool",
+              "name": "isRevoked",
+              "type": "bool"
             }
           ],
-          "name": "NewFeedback",
-          "type": "event"
+          "stateMutability": "view",
+          "type": "function"
         },
         {
-          "anonymous": false,
+          "inputs": [],
+          "name": "renounceOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
           "inputs": [
             {
-              "indexed": true,
               "internalType": "uint256",
               "name": "agentId",
               "type": "uint256"
             },
             {
-              "indexed": true,
-              "internalType": "address",
-              "name": "clientAddress",
-              "type": "address"
-            },
-            {
-              "indexed": true,
               "internalType": "uint64",
               "name": "feedbackIndex",
               "type": "uint64"
             }
           ],
-          "name": "FeedbackRevoked",
-          "type": "event"
+          "name": "revokeFeedback",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
         },
         {
-          "anonymous": false,
           "inputs": [
             {
-              "indexed": true,
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "indexed": true,
               "internalType": "address",
-              "name": "clientAddress",
+              "name": "newOwner",
               "type": "address"
-            },
-            {
-              "indexed": true,
-              "internalType": "uint64",
-              "name": "feedbackIndex",
-              "type": "uint64"
-            },
-            {
-              "indexed": true,
-              "internalType": "address",
-              "name": "responder",
-              "type": "address"
-            },
-            {
-              "indexed": false,
-              "internalType": "string",
-              "name": "responseURI",
-              "type": "string"
             }
           ],
-          "name": "ResponseAppended",
-          "type": "event"
+          "name": "transferOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "upgradeToAndCall",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
         }
       ],
       "validationRegistry": [
         {
           "inputs": [],
-          "name": "getIdentityRegistry",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "validatorAddress",
-              "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "requestUri",
-              "type": "string"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "requestHash",
-              "type": "bytes32"
-            }
-          ],
-          "name": "validationRequest",
-          "outputs": [],
           "stateMutability": "nonpayable",
-          "type": "function"
+          "type": "constructor"
         },
         {
           "inputs": [
-            {
-              "internalType": "bytes32",
-              "name": "requestHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "uint8",
-              "name": "response",
-              "type": "uint8"
-            },
-            {
-              "internalType": "string",
-              "name": "responseURI",
-              "type": "string"
-            },
-            {
-              "internalType": "bytes32",
-              "name": "responseHash",
-              "type": "bytes32"
-            },
-            {
-              "internalType": "string",
-              "name": "tag",
-              "type": "string"
-            }
-          ],
-          "name": "validationResponse",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes32",
-              "name": "requestHash",
-              "type": "bytes32"
-            }
-          ],
-          "name": "getValidationStatus",
-          "outputs": [
             {
               "internalType": "address",
-              "name": "validatorAddress",
+              "name": "target",
               "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint8",
-              "name": "response",
-              "type": "uint8"
-            },
-            {
-              "internalType": "string",
-              "name": "tag",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "lastUpdate",
-              "type": "uint256"
             }
           ],
-          "stateMutability": "view",
-          "type": "function"
+          "name": "AddressEmptyCode",
+          "type": "error"
         },
         {
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address[]",
-              "name": "validatorAddresses",
-              "type": "address[]"
-            },
-            {
-              "internalType": "string",
-              "name": "tag",
-              "type": "string"
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
             }
           ],
-          "name": "getSummary",
-          "outputs": [
+          "name": "ERC1967InvalidImplementation",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "ERC1967NonPayable",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "FailedCall",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "InvalidInitialization",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotInitializing",
+          "type": "error"
+        },
+        {
+          "inputs": [
             {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnableInvalidOwner",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "name": "OwnableUnauthorizedAccount",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "UUPSUnauthorizedCallContext",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "slot",
+              "type": "bytes32"
+            }
+          ],
+          "name": "UUPSUnsupportedProxiableUUID",
+          "type": "error"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
               "internalType": "uint64",
-              "name": "count",
+              "name": "version",
               "type": "uint64"
-            },
-            {
-              "internalType": "uint8",
-              "name": "averageResponse",
-              "type": "uint8"
             }
           ],
-          "stateMutability": "view",
-          "type": "function"
+          "name": "Initialized",
+          "type": "event"
         },
         {
+          "anonymous": false,
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            }
-          ],
-          "name": "getAgentValidations",
-          "outputs": [
-            {
-              "internalType": "bytes32[]",
-              "name": "",
-              "type": "bytes32[]"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
+              "indexed": true,
               "internalType": "address",
-              "name": "validatorAddress",
-              "type": "address"
-            }
-          ],
-          "name": "getValidatorRequests",
-          "outputs": [
-            {
-              "internalType": "bytes32[]",
-              "name": "",
-              "type": "bytes32[]"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
-            }
-          ],
-          "name": "validations",
-          "outputs": [
-            {
-              "internalType": "address",
-              "name": "validatorAddress",
+              "name": "previousOwner",
               "type": "address"
             },
             {
-              "internalType": "uint256",
-              "name": "agentId",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint8",
-              "name": "response",
-              "type": "uint8"
-            },
-            {
-              "internalType": "string",
-              "name": "tag",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "lastUpdate",
-              "type": "uint256"
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
             }
           ],
-          "stateMutability": "view",
-          "type": "function"
+          "name": "OwnershipTransferred",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "implementation",
+              "type": "address"
+            }
+          ],
+          "name": "Upgraded",
+          "type": "event"
         },
         {
           "anonymous": false,
@@ -3450,7 +4205,7 @@
             {
               "indexed": false,
               "internalType": "string",
-              "name": "requestUri",
+              "name": "requestURI",
               "type": "string"
             },
             {
@@ -3511,6 +4266,299 @@
           ],
           "name": "ValidationResponse",
           "type": "event"
+        },
+        {
+          "inputs": [],
+          "name": "UPGRADE_INTERFACE_VERSION",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            }
+          ],
+          "name": "getAgentValidations",
+          "outputs": [
+            {
+              "internalType": "bytes32[]",
+              "name": "",
+              "type": "bytes32[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getIdentityRegistry",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address[]",
+              "name": "validatorAddresses",
+              "type": "address[]"
+            },
+            {
+              "internalType": "string",
+              "name": "tag",
+              "type": "string"
+            }
+          ],
+          "name": "getSummary",
+          "outputs": [
+            {
+              "internalType": "uint64",
+              "name": "count",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint8",
+              "name": "avgResponse",
+              "type": "uint8"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "requestHash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "getValidationStatus",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "validatorAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint8",
+              "name": "response",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "responseHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "string",
+              "name": "tag",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "lastUpdate",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "validatorAddress",
+              "type": "address"
+            }
+          ],
+          "name": "getValidatorRequests",
+          "outputs": [
+            {
+              "internalType": "bytes32[]",
+              "name": "",
+              "type": "bytes32[]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "getVersion",
+          "outputs": [
+            {
+              "internalType": "string",
+              "name": "",
+              "type": "string"
+            }
+          ],
+          "stateMutability": "pure",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "identityRegistry_",
+              "type": "address"
+            }
+          ],
+          "name": "initialize",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "proxiableUUID",
+          "outputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "renounceOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "transferOwnership",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newImplementation",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "upgradeToAndCall",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "validatorAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "agentId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "requestURI",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "requestHash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "validationRequest",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "requestHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "uint8",
+              "name": "response",
+              "type": "uint8"
+            },
+            {
+              "internalType": "string",
+              "name": "responseURI",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "responseHash",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "string",
+              "name": "tag",
+              "type": "string"
+            }
+          ],
+          "name": "validationResponse",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
         }
       ]
     }

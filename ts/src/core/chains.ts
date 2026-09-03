@@ -691,7 +691,12 @@ export class TronAdapter implements ChainAdapter {
   private pickMethod(contract: any, abi: Abi, name: string, argCount: number): any {
     const funcs = (abi as Array<any>).filter((x) => x.type === "function" && x.name === name && (x.inputs?.length ?? 0) === argCount);
     if (funcs.length > 0) {
-      const signature = `${name}(${(funcs[0].inputs || []).map((i: any) => i.type).join(",")})`;
+      const canonicalType = (input: any): string => {
+        if (!String(input.type).startsWith("tuple")) return input.type;
+        const components = (input.components || []).map(canonicalType).join(",");
+        return `(${components})${String(input.type).slice("tuple".length)}`;
+      };
+      const signature = `${name}(${(funcs[0].inputs || []).map(canonicalType).join(",")})`;
       return contract[signature] ?? contract[name];
     }
     return contract[name];
@@ -757,7 +762,7 @@ export class TronAdapter implements ChainAdapter {
     const argCount = metadata !== undefined ? 2 : agentURI !== undefined ? 1 : 0;
     const method = this.pickMethod(contract, abi, "register", argCount);
     const args = metadata !== undefined
-      ? [agentURI ?? "", metadata.map(({ metadataKey, metadataValue }) => ({ metadataKey, metadataValue }))]
+      ? [agentURI ?? "", metadata.map(({ metadataKey, metadataValue }) => [metadataKey, metadataValue])]
       : agentURI !== undefined
         ? [agentURI]
         : [];
@@ -806,7 +811,7 @@ export class TronAdapter implements ChainAdapter {
     if (!this.signerAddress) throw new Error("Signer is required for write operations");
     const contract = await this.tronWeb.contract(abi as any, identityRegistry);
     const method = this.pickMethod(contract, abi, "approve", 2);
-    return await method(Number(agentId), this.toChainAddress(operator)).send({ feeLimit: this.feeLimit });
+    return await method(this.toChainAddress(operator), Number(agentId)).send({ feeLimit: this.feeLimit });
   }
 
   async ownerOf(identityRegistry: string, abi: Abi, agentId: bigint): Promise<string> {

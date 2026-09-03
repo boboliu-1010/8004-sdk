@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added official ERC-8004 Registry ABI support and Base Mainnet/Base Sepolia
   network configuration to the TypeScript SDK.
+- Synchronized the TypeScript TRON Registry ABIs and approval call order with
+  the deployed TRC-8004 v2 contracts on Mainnet, Nile, and Shasta.
 - Added complete TypeScript Registry read APIs, registration overloads, and
   per-agent approval management.
 - Added an `ExternalSigner` adapter for EVM and TRON writes while preserving
