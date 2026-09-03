@@ -7,3 +7,7 @@ fields described by
 Both the Python and TypeScript test suites load these files. The assertions
 cover semantic compatibility across SDKs rather than byte-for-byte JSON
 equality.
+
+`tron-extensible-services.json` covers the Final
+[`TRC-8004`](https://github.com/tronprotocol/tips/blob/master/tip-8004.md)
+registration type and TRON Base58 registry address representation.

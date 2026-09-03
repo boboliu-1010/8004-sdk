@@ -7,13 +7,10 @@ import { SDK } from "../src/core/sdk.js";
 import type { ChainAdapter } from "../src/core/chains.js";
 import type { RegistrationFile } from "../src/models/types.js";
 
-const fixtureUrl = new URL(
-  "../../fixtures/registration-v1/extensible-services.json",
-  import.meta.url,
-);
+const fixtureDirectory = new URL("../../fixtures/registration-v1/", import.meta.url);
 
-async function loadFixture(): Promise<Record<string, unknown>> {
-  return JSON.parse(await readFile(fixtureUrl, "utf8")) as Record<string, unknown>;
+async function loadFixture(name = "extensible-services.json"): Promise<Record<string, unknown>> {
+  return JSON.parse(await readFile(new URL(name, fixtureDirectory), "utf8")) as Record<string, unknown>;
 }
 
 test("registration-v1 fixture hydrates canonical wire fields", async () => {
@@ -29,6 +26,7 @@ test("registration-v1 fixture hydrates canonical wire fields", async () => {
     assert.deepEqual(hydrated?.endpoints, fixture.services);
     assert.deepEqual(hydrated?.registrations, fixture.registrations);
     assert.equal(hydrated?.x402support, fixture.x402Support);
+    assert.equal(hydrated?.registrationType, fixture.type);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -38,10 +36,13 @@ test("registration-v1 fixture serializes canonical wire fields", async () => {
   const fixture = await loadFixture();
   let uploaded = "";
   const sdk = Object.create(SDK.prototype) as SDK;
-  Object.defineProperty(sdk, "ipfsUploader", {
-    value: async (json: string) => {
-      uploaded = json;
-      return "ipfs://fixture";
+  Object.defineProperties(sdk, {
+    chainType: { value: "evm" },
+    ipfsUploader: {
+      value: async (json: string) => {
+        uploaded = json;
+        return "ipfs://fixture";
+      },
     },
   });
 
@@ -65,6 +66,7 @@ test("registration-v1 fixture serializes canonical wire fields", async () => {
   assert.deepEqual(serialized.services, fixture.services);
   assert.deepEqual(serialized.registrations, fixture.registrations);
   assert.equal(serialized.x402Support, fixture.x402Support);
+  assert.equal(serialized.type, fixture.type);
   assert.deepEqual(serialized.tags, internal.tags);
   assert.deepEqual(serialized.metadata, internal.metadata);
   assert.equal("endpoints" in serialized, false);
@@ -87,7 +89,12 @@ function registrationFile(agentId?: string): RegistrationFile {
   };
 }
 
-function sdkWithMockChain(options: { existingAgentId?: string } = {}) {
+function sdkWithMockChain(options: {
+  existingAgentId?: string;
+  chainType?: "evm" | "tron";
+  chainId?: number;
+  identityRegistry?: string;
+} = {}) {
   let uploaded = "";
   const calls: string[] = [];
   const chain = {
@@ -108,10 +115,10 @@ function sdkWithMockChain(options: { existingAgentId?: string } = {}) {
 
   const sdk = Object.create(SDK.prototype) as SDK;
   Object.defineProperties(sdk, {
-    chainType: { value: "evm" },
-    chainId: { value: 8453 },
+    chainType: { value: options.chainType ?? "evm" },
+    chainId: { value: options.chainId ?? 8453 },
     chain: { value: chain },
-    identityRegistry: { value: "0x1234567890123456789012345678901234567890" },
+    identityRegistry: { value: options.identityRegistry ?? "0x1234567890123456789012345678901234567890" },
     identityRegistryAbi: { value: [] },
     ipfsUploader: {
       value: async (json: string) => {
@@ -163,6 +170,21 @@ test("existing agent registerIPFS updates its URI without minting another agent"
     "setAgentURI:5:ipfs://registration",
     "wait:0xuri",
   ]);
+});
+
+test("TRON registerIPFS emits the Final TRC-8004 registration shape", async () => {
+  const fixture = await loadFixture("tron-extensible-services.json");
+  const { agent, uploaded } = sdkWithMockChain({
+    chainType: "tron",
+    chainId: 728126428,
+    identityRegistry: "TFLvivMdKsk6v2GrwyD2apEr9dU1w7p7Fy",
+  });
+
+  const tx = await agent.registerIPFS();
+  await tx.waitConfirmed();
+
+  assert.equal(uploaded().type, fixture.type);
+  assert.deepEqual(uploaded().registrations, fixture.registrations);
 });
 
 test("legacy TypeScript field aliases remain readable", async () => {

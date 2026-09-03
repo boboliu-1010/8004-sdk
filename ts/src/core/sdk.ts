@@ -189,10 +189,12 @@ export class SDK {
       const json = await res.json();
       if (!json || typeof json !== "object") return undefined;
       const rf = json as Partial<RegistrationFile> & {
+        type?: string;
         services?: RegistrationFile["endpoints"];
         x402Support?: boolean;
       };
       return {
+        registrationType: typeof rf.type === "string" ? rf.type : undefined,
         name: typeof rf.name === "string" ? rf.name : undefined,
         description: typeof rf.description === "string" ? rf.description : undefined,
         image: typeof rf.image === "string" ? rf.image : undefined,
@@ -223,7 +225,7 @@ export class SDK {
     }
 
     let registrations = registrationFile.registrations ?? [];
-    if (registrations.length === 0 && registrationFile.agentId && this.chainType === "evm") {
+    if (registrations.length === 0 && registrationFile.agentId) {
       const agentId = Number(registrationFile.agentId.split(":").at(-1));
       if (Number.isSafeInteger(agentId) && agentId >= 0) {
         registrations = [{
@@ -234,7 +236,9 @@ export class SDK {
     }
 
     const wireRegistration = {
-      type: "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+      type: this.chainType === "tron"
+        ? "https://github.com/tronprotocol/tips/blob/master/tip-8004.md#registration-v1"
+        : "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
       name: registrationFile.name,
       description: registrationFile.description,
       image: registrationFile.image,

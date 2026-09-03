@@ -824,6 +824,7 @@ class Agent:
                 self.registration_file,
                 chainId=self.sdk.chain_id(),
                 identityRegistryAddress=self.sdk.identity_registry.address,
+                chainType=self.sdk.chain_type,
             )
 
             agentId_int = int(self.agentId.split(":")[-1])
@@ -879,6 +880,7 @@ class Agent:
                 self.registration_file,
                 chainId=self.sdk.chain_id(),
                 identityRegistryAddress=self.sdk.identity_registry.address,
+                chainType=self.sdk.chain_type,
             )
 
             txHash2 = self.sdk.web3_client.transact_contract(
@@ -1232,7 +1234,8 @@ class Agent:
         """Convert registration file to JSON."""
         return json.dumps(self.registration_file.to_dict(
             chain_id=self.sdk.chain_id(),
-            identity_registry_address=self.sdk.identity_registry.address if self.sdk.identity_registry else None
+            identity_registry_address=self.sdk.identity_registry.address if self.sdk.identity_registry else None,
+            chain_type=self.sdk.chain_type,
         ), indent=2)
 
     def saveToFile(self, filePath: str) -> None:

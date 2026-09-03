@@ -1,0 +1,29 @@
+{
+  "type": "https://github.com/tronprotocol/tips/blob/master/tip-8004.md#registration-v1",
+  "name": "TRON Fixture Agent",
+  "description": "Exercises the TRC-8004 registration-v1 wire fields.",
+  "image": "https://example.test/tron-agent.png",
+  "services": [
+    {
+      "name": "MCP",
+      "endpoint": "https://example.test/mcp",
+      "version": "2025-12-05"
+    },
+    {
+      "name": "web",
+      "endpoint": "https://example.test"
+    }
+  ],
+  "registrations": [
+    {
+      "agentId": 7,
+      "agentRegistry": "eip155:728126428:TFLvivMdKsk6v2GrwyD2apEr9dU1w7p7Fy"
+    }
+  ],
+  "supportedTrust": [
+    "reputation"
+  ],
+  "active": true,
+  "x402Support": true,
+  "updatedAt": 1735689600
+}

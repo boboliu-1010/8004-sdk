@@ -370,6 +370,7 @@ class SDK:
         if registry_address:
             registration_file._registry_address = registry_address
             registration_file._chain_id = self.chainId
+            registration_file._chain_type = self.chain_type
         
         # Hydrate on-chain data
         self._hydrate_agent_data(registration_file, int(token_id))

@@ -132,6 +132,7 @@ export interface TxMined<T> {
 }
 
 export interface RegistrationFile {
+  registrationType?: string;
   agentId?: string;
   agentURI?: string;
   walletAddress?: string;

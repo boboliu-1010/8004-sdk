@@ -20,6 +20,9 @@ CID = str  # IPFS CID (if used)
 Timestamp = int  # unix seconds
 IdemKey = str  # idempotency key for write ops
 
+ERC8004_REGISTRATION_TYPE = "https://eips.ethereum.org/EIPS/eip-8004#registration-v1"
+TRC8004_REGISTRATION_TYPE = "https://github.com/tronprotocol/tips/blob/master/tip-8004.md#registration-v1"
+
 
 class EndpointType(Enum):
     """Types of endpoints that agents can advertise."""
@@ -65,19 +68,26 @@ class RegistrationFile:
     metadata: Dict[str, Any] = field(default_factory=dict)  # arbitrary, SDK-managed
     updatedAt: Timestamp = field(default_factory=lambda: int(datetime.now().timestamp()))
     registrations: List[Dict[str, Any]] = field(default_factory=list)
+    registrationType: Optional[str] = None
 
     def __str__(self) -> str:
         """String representation as JSON."""
         # Use stored registry info if available
         chain_id = getattr(self, '_chain_id', None)
         registry_address = getattr(self, '_registry_address', None)
-        return json.dumps(self.to_dict(chain_id, registry_address), indent=2, default=str)
+        chain_type = getattr(self, '_chain_type', None)
+        return json.dumps(self.to_dict(chain_id, registry_address, chain_type), indent=2, default=str)
     
     def __repr__(self) -> str:
         """Developer representation."""
         return f"RegistrationFile(agentId={self.agentId}, agentURI={self.agentURI}, name={self.name})"
     
-    def to_dict(self, chain_id: Optional[int] = None, identity_registry_address: Optional[str] = None) -> Dict[str, Any]:
+    def to_dict(
+        self,
+        chain_id: Optional[int] = None,
+        identity_registry_address: Optional[str] = None,
+        chain_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         # Build endpoints array
         endpoints = []
@@ -101,8 +111,16 @@ class RegistrationFile:
                 "agentRegistry": f"eip155:{chain_id}:{identity_registry_address}"
             })
         
+        registration_type = self.registrationType or ERC8004_REGISTRATION_TYPE
+        if chain_type:
+            registration_type = (
+                TRC8004_REGISTRATION_TYPE
+                if chain_type.lower() == "tron"
+                else ERC8004_REGISTRATION_TYPE
+            )
+
         return {
-            "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+            "type": registration_type,
             "name": self.name,
             "description": self.description,
             "image": self.image,
@@ -151,6 +169,7 @@ class RegistrationFile:
             walletChainId=data.get("walletChainId"),
             endpoints=endpoints,
             registrations=[dict(registration) for registration in (data.get("registrations") or [])],
+            registrationType=data.get("type"),
             trustModels=trust_models,
             active=data.get("active", False),
             x402support=data.get("x402Support", data.get("x402support", False)),  # Handle both camelCase and lowercase
