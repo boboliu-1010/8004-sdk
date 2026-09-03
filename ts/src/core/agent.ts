@@ -193,28 +193,33 @@ export class Agent {
     }
 
     const registrationTx = await this.sdk.submitRegister("");
+    let uriBinding: Promise<{ agentId: string; agentURI: string; txHash: string }> | undefined;
     return new TransactionHandle<RegistrationResult>(registrationTx.txHash, this.sdk.chain, async (receipt) => {
-      const parsed = this.sdk.chain.parseRegisteredAgentId(receipt);
-      if (parsed === undefined) {
-        throw new Error("Unable to determine registered agent ID from transaction receipt");
-      }
+      uriBinding ??= (async () => {
+        const parsed = this.sdk.chain.parseRegisteredAgentId(receipt);
+        if (parsed === undefined) {
+          throw new Error("Unable to determine registered agent ID from transaction receipt");
+        }
 
-      const agentId = `${this.sdk.chainId}:${parsed}`;
-      this.registrationFile.agentId = agentId;
+        const agentId = `${this.sdk.chainId}:${parsed}`;
+        this.registrationFile.agentId = agentId;
+        this.touch();
+
+        const uri = await this.sdk.uploadRegistrationFile(this.toJSON());
+        const uriTxHash = await this.sdk.chain.setAgentURI(
+          this.sdk.identityRegistry,
+          this.sdk.identityRegistryAbi,
+          BigInt(parsed),
+          uri,
+        );
+        return { agentId, agentURI: uri, txHash: uriTxHash };
+      })();
+      const binding = await uriBinding;
+      await this.sdk.chain.waitForTransaction(binding.txHash);
+
+      this.registrationFile.agentURI = binding.agentURI;
       this.touch();
-
-      const uri = await this.sdk.uploadRegistrationFile(this.toJSON());
-      const uriTxHash = await this.sdk.chain.setAgentURI(
-        this.sdk.identityRegistry,
-        this.sdk.identityRegistryAbi,
-        BigInt(parsed),
-        uri,
-      );
-      await this.sdk.chain.waitForTransaction(uriTxHash);
-
-      this.registrationFile.agentURI = uri;
-      this.touch();
-      return { agentId, agentURI: uri };
+      return { agentId: binding.agentId, agentURI: binding.agentURI };
     });
   }
 

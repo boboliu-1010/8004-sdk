@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   minted agent ID before publishing, while retaining SDK extension fields.
 - Added chain-aware TRC-8004 registration serialization for TRON, including
   the TRC registration type and Base58 identity registry representation.
+- Made the two-stage TypeScript IPFS registration completion idempotent so
+  repeated confirmation waits do not upload or bind the agent URI again.
 
 ### Changed
 

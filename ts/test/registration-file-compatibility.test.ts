@@ -94,8 +94,10 @@ function sdkWithMockChain(options: {
   chainType?: "evm" | "tron";
   chainId?: number;
   identityRegistry?: string;
+  failFirstUriWait?: boolean;
 } = {}) {
   let uploaded = "";
+  let uriWaitFailed = false;
   const calls: string[] = [];
   const chain = {
     registerAgent: async (_registry: string, _abi: unknown, uri: string) => {
@@ -108,6 +110,10 @@ function sdkWithMockChain(options: {
     },
     waitForTransaction: async (txHash: string) => {
       calls.push(`wait:${txHash}`);
+      if (txHash === "0xuri" && options.failFirstUriWait && !uriWaitFailed) {
+        uriWaitFailed = true;
+        throw new Error("confirmation timeout");
+      }
       return { txHash };
     },
     parseRegisteredAgentId: () => "7",
@@ -151,6 +157,42 @@ test("first registerIPFS mints before uploading and binds the resulting URI", as
     "register:",
     "wait:0xmint",
     "setAgentURI:7:ipfs://registration",
+    "wait:0xuri",
+  ]);
+});
+
+test("first registerIPFS performs its upload and URI binding only once", async () => {
+  const { agent, calls } = sdkWithMockChain();
+
+  const tx = await agent.registerIPFS();
+  const first = await tx.waitConfirmed();
+  const second = await tx.waitConfirmed();
+
+  assert.deepEqual(second.result, first.result);
+  assert.deepEqual(calls, [
+    "register:",
+    "wait:0xmint",
+    "setAgentURI:7:ipfs://registration",
+    "wait:0xuri",
+    "wait:0xmint",
+    "wait:0xuri",
+  ]);
+});
+
+test("first registerIPFS retries URI confirmation without rebroadcasting", async () => {
+  const { agent, calls } = sdkWithMockChain({ failFirstUriWait: true });
+
+  const tx = await agent.registerIPFS();
+  await assert.rejects(tx.waitConfirmed(), /confirmation timeout/);
+  const mined = await tx.waitConfirmed();
+
+  assert.equal(mined.result.agentURI, "ipfs://registration");
+  assert.deepEqual(calls, [
+    "register:",
+    "wait:0xmint",
+    "setAgentURI:7:ipfs://registration",
+    "wait:0xuri",
+    "wait:0xmint",
     "wait:0xuri",
   ]);
 });
