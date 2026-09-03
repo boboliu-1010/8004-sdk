@@ -31,3 +31,26 @@ def test_registration_v1_fixture_preserves_canonical_wire_fields():
     assert serialized["services"] == fixture["services"]
     assert serialized["registrations"] == fixture["registrations"]
     assert serialized["x402Support"] is True
+
+
+def test_registration_without_registry_context_does_not_emit_placeholder():
+    registration = RegistrationFile(agentId="1:7", name="Agent")
+
+    serialized = registration.to_dict()
+
+    assert serialized["registrations"] == []
+
+
+def test_registration_with_registry_context_synthesizes_registration():
+    registration = RegistrationFile(agentId="8453:7", name="Agent")
+    registry = "0x1234567890123456789012345678901234567890"
+
+    serialized = registration.to_dict(
+        chain_id=8453,
+        identity_registry_address=registry,
+    )
+
+    assert serialized["registrations"] == [{
+        "agentId": 7,
+        "agentRegistry": f"eip155:8453:{registry}",
+    }]

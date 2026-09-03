@@ -94,12 +94,11 @@ class RegistrationFile:
         
         # Build registrations array
         registrations = [dict(registration) for registration in self.registrations]
-        if not registrations and self.agentId:
+        if not registrations and self.agentId and chain_id is not None and identity_registry_address:
             agent_id_int = int(self.agentId.split(":")[-1]) if ":" in self.agentId else int(self.agentId)
-            agent_registry = f"eip155:{chain_id}:{identity_registry_address}" if chain_id and identity_registry_address else "eip155:1:{identityRegistry}"
             registrations.append({
                 "agentId": agent_id_int,
-                "agentRegistry": agent_registry
+                "agentRegistry": f"eip155:{chain_id}:{identity_registry_address}"
             })
         
         return {

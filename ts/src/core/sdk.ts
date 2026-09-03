@@ -244,6 +244,8 @@ export class SDK {
       active: registrationFile.active,
       x402Support: registrationFile.x402support,
       updatedAt: registrationFile.updatedAt,
+      tags: registrationFile.tags,
+      metadata: registrationFile.metadata,
     };
     return await this.ipfsUploader(JSON.stringify(wireRegistration, null, 2));
   }
