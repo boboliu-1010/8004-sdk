@@ -6,6 +6,7 @@ export { AgentIndexer } from "./core/indexer.js";
 
 export type {
   AgentSummary,
+  ExternalSigner,
   FeedbackSearchFilters,
   FeedbackSearchOptions,
   SearchFilters,

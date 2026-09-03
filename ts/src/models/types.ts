@@ -1,10 +1,17 @@
 export type ChainType = "evm" | "tron";
 
+export interface ExternalSigner {
+  address: string;
+  signTransaction(transaction: Record<string, unknown>): Promise<string | Record<string, unknown>>;
+  signMessage?(message: unknown): Promise<`0x${string}`>;
+  signTypedData?(typedData: Record<string, unknown>): Promise<`0x${string}`>;
+}
+
 export interface SDKConfig {
   chainId?: number;
   rpcUrl?: string;
   network: string;
-  signer?: string;
+  signer?: string | ExternalSigner;
   feeLimit?: number;
   subgraphUrl?: string;
   subgraphOverrides?: Record<number, string>;
@@ -22,7 +29,7 @@ export interface MetadataEntry {
 }
 
 export interface SetWalletOptions {
-  newWalletSigner?: string;
+  newWalletSigner?: string | ExternalSigner;
   deadline?: number;
   signature?: `0x${string}`;
 }
@@ -30,7 +37,7 @@ export interface SetWalletOptions {
 export interface GiveFeedbackParams {
   agentId: string | number;
   value: number;
-  reviewerSigner?: string;
+  reviewerSigner?: string | ExternalSigner;
   tag1?: string;
   tag2?: string;
   endpoint?: string;

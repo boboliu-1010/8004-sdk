@@ -11,11 +11,11 @@ import {
   type PublicClient,
   type WalletClient,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import { privateKeyToAccount, toAccount } from "viem/accounts";
 import { base, baseSepolia, bsc, bscTestnet } from "viem/chains";
 import { TronWeb } from "tronweb";
 
-import type { ChainContracts, ChainType, MetadataEntry, TxWaitOptions } from "../models/types.js";
+import type { ChainContracts, ChainType, ExternalSigner, MetadataEntry, TxWaitOptions } from "../models/types.js";
 
 const REGISTERED_EVENT = parseAbiItem("event Registered(uint256 indexed agentId, string agentURI, address indexed owner)");
 
@@ -160,7 +160,7 @@ export class EvmAdapter implements ChainAdapter {
   private readonly publicClient: PublicClient;
   private readonly walletClient?: WalletClient;
 
-  constructor(rpcUrl: string, chainId: number, signer?: string) {
+  constructor(rpcUrl: string, chainId: number, signer?: string | ExternalSigner) {
     this.rpcUrl = rpcUrl;
     const chain = chainId === 56
       ? bsc
@@ -171,11 +171,31 @@ export class EvmAdapter implements ChainAdapter {
           : baseSepolia;
     this.publicClient = createPublicClient({ chain, transport: http(rpcUrl) }) as unknown as PublicClient;
 
-    if (signer) {
+    if (typeof signer === "string") {
       const key = signer.startsWith("0x") ? (signer as Hex) : (`0x${signer}` as Hex);
       const account = privateKeyToAccount(key);
       this.walletClient = createWalletClient({ account, chain, transport: http(rpcUrl) }) as unknown as WalletClient;
       this.signerAddress = account.address;
+    } else if (signer) {
+      const address = this.toEvmAddress(signer.address) as Hex;
+      const account = toAccount({
+        address,
+        async signTransaction(transaction) {
+          const signed = await signer.signTransaction(transaction as unknown as Record<string, unknown>);
+          if (typeof signed !== "string") throw new Error("EVM signer must return a serialized transaction");
+          return (signed.startsWith("0x") ? signed : `0x${signed}`) as Hex;
+        },
+        async signMessage(message) {
+          if (!signer.signMessage) throw new Error("External signer does not support message signing");
+          return await signer.signMessage(message);
+        },
+        async signTypedData(typedData) {
+          if (!signer.signTypedData) throw new Error("External signer does not support typed-data signing");
+          return await signer.signTypedData(typedData as unknown as Record<string, unknown>);
+        },
+      });
+      this.walletClient = createWalletClient({ account, chain, transport: http(rpcUrl) }) as unknown as WalletClient;
+      this.signerAddress = address;
     }
   }
 
@@ -642,15 +662,26 @@ export class TronAdapter implements ChainAdapter {
   private readonly feeLimit: number;
   private readonly readCaller: string;
 
-  constructor(rpcUrl: string, signer?: string, feeLimit: number = 120_000_000) {
+  constructor(rpcUrl: string, signer?: string | ExternalSigner, feeLimit: number = 120_000_000) {
     this.rpcUrl = rpcUrl;
     this.feeLimit = feeLimit;
-    this.tronWeb = new TronWeb({ fullHost: rpcUrl, privateKey: signer });
+    this.tronWeb = new TronWeb({ fullHost: rpcUrl, privateKey: typeof signer === "string" ? signer : undefined });
     this.readCaller = "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb";
-    if (signer) {
+    if (typeof signer === "string") {
       const addr = this.tronWeb.address.fromPrivateKey(signer);
       if (addr && typeof addr === "string") this.signerAddress = addr;
       this.readCaller = this.signerAddress || this.readCaller;
+    } else if (signer) {
+      this.signerAddress = this.toChainAddress(signer.address);
+      this.readCaller = this.signerAddress;
+      this.tronWeb.setAddress(this.signerAddress);
+      (this.tronWeb.trx as any).sign = async (transaction: Record<string, unknown>) => {
+        const signed = await signer.signTransaction(transaction);
+        if (!signed || typeof signed !== "object") {
+          throw new Error("TRON signer must return a signed transaction object");
+        }
+        return signed;
+      };
     }
   }
 

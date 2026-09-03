@@ -31,7 +31,7 @@ import { SDK } from "@bankofai/8004-sdk";
 
 - Node.js `>=20`
 - npm
-- Funded private key for write operations
+- Funded private key or external signer adapter for write operations
 - RPC endpoint
 
 ### Install from Source (Local)
@@ -70,6 +70,31 @@ const tx = await agent.register("https://example.com/agent-card.json");
 const mined = await tx.waitConfirmed({ timeoutMs: 180_000 });
 console.log(mined.result.agentId, mined.result.agentURI);
 ```
+
+### External Signers
+
+Applications that keep keys in a wallet service can inject a signer adapter
+instead of exporting a private key. This matches the Agent0 wallet-provider
+pattern while also covering TRON transactions:
+
+```ts
+import { SDK, type ExternalSigner } from "@bankofai/8004-sdk";
+
+const signer: ExternalSigner = {
+  address: await wallet.getAddress(),
+  signTransaction: (transaction) => wallet.signTransaction(transaction),
+  signTypedData: (typedData) => wallet.signTypedData(typedData),
+};
+
+const sdk = new SDK({ network: "base", rpcUrl: "<RPC_URL>", signer });
+```
+
+For EVM, `signTransaction` returns a serialized transaction hex string. For
+TRON, it returns the signed transaction object. The SDK builds and broadcasts
+the transaction. `signTypedData` is required only when the adapter signs an
+agent-wallet binding through `agent.setWallet()`.
+
+The existing `signer: "<PRIVATE_KEY>"` configuration remains supported.
 
 ### Base Networks
 

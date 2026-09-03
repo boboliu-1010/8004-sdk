@@ -1,7 +1,7 @@
 import { recoverTypedDataAddress, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
-import type { MetadataEntry, RegistrationFile, RegistrationResult, SetWalletOptions } from "../models/types.js";
+import type { ExternalSigner, MetadataEntry, RegistrationFile, RegistrationResult, SetWalletOptions } from "../models/types.js";
 import type { SDK } from "./sdk.js";
 import { TransactionHandle } from "./transaction-handle.js";
 
@@ -257,21 +257,29 @@ export class Agent {
 
     let signature = options.signature;
     if (!signature) {
-      const signerKey = ((options.newWalletSigner ?? this.sdk.signer) || "").trim();
-      if (!signerKey) {
+      const walletSigner = options.newWalletSigner ?? this.sdk.signer;
+      if (!walletSigner) {
         throw new Error("New wallet signature is required. Provide options.newWalletSigner or options.signature.");
       }
-      const normalizedKey = (signerKey.startsWith("0x") ? signerKey : `0x${signerKey}`) as Hex;
-      const account = privateKeyToAccount(normalizedKey);
-      if (account.address.toLowerCase() !== addrEvm.toLowerCase()) {
-        throw new Error(`newWalletSigner address (${account.address}) does not match newWallet (${addrEvm}).`);
+
+      if (typeof walletSigner === "string") {
+        const normalizedKey = (walletSigner.startsWith("0x") ? walletSigner : `0x${walletSigner}`) as Hex;
+        const account = privateKeyToAccount(normalizedKey);
+        if (account.address.toLowerCase() !== addrEvm.toLowerCase()) {
+          throw new Error(`newWalletSigner address (${account.address}) does not match newWallet (${addrEvm}).`);
+        }
+        signature = await account.signTypedData({ domain, types, primaryType: "AgentWalletSet", message });
+      } else {
+        const externalSigner = walletSigner as ExternalSigner;
+        const signerAddress = this.sdk.chain.toEvmAddress(externalSigner.address);
+        if (signerAddress.toLowerCase() !== addrEvm.toLowerCase()) {
+          throw new Error(`newWalletSigner address (${signerAddress}) does not match newWallet (${addrEvm}).`);
+        }
+        if (!externalSigner.signTypedData) {
+          throw new Error("External signer does not support typed-data signing");
+        }
+        signature = await externalSigner.signTypedData({ domain, types, primaryType: "AgentWalletSet", message });
       }
-      signature = await account.signTypedData({
-        domain,
-        types,
-        primaryType: "AgentWalletSet",
-        message,
-      });
 
       const recovered = await recoverTypedDataAddress({
         domain,

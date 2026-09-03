@@ -8,6 +8,7 @@ import { getIdentityRegistryAbi, getReputationRegistryAbi, getValidationRegistry
 import { SubgraphClient } from "./subgraph-client.js";
 import { AgentIndexer } from "./indexer.js";
 import type {
+  ExternalSigner,
   AppendResponseParams,
   AgentSummary,
   FeedbackSearchFilters,
@@ -34,7 +35,7 @@ export class SDK {
   readonly network: string;
   readonly rpcUrl: string;
   readonly chainId: number;
-  readonly signer?: string;
+  readonly signer?: string | ExternalSigner;
   readonly feeLimit: number;
 
   readonly identityRegistry: string;
