@@ -154,6 +154,7 @@ export interface TxMined<T> {
 }
 
 export interface RegistrationFile {
+  registrationType?: string;
   agentId?: string;
   agentURI?: string;
   walletAddress?: string;
@@ -162,6 +163,7 @@ export interface RegistrationFile {
   description: string;
   image?: string;
   endpoints: Array<{ name: string; endpoint: string; version?: string }>;
+  registrations?: Array<{ agentId: number; agentRegistry: string }>;
   tags: string[];
   metadata: Record<string, unknown>;
   supportedTrust: string[];

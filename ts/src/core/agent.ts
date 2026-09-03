@@ -174,8 +174,48 @@ export class Agent {
   }
 
   async registerIPFS(): Promise<TransactionHandle<RegistrationResult>> {
-    const uri = await this.sdk.uploadRegistrationFile(this.toJSON());
-    return await this.register(uri);
+    if (this.registrationFile.agentId) {
+      const agentId = this.registrationFile.agentId;
+      const agentTokenId = BigInt(agentId.split(":").pop() as string);
+      const uri = await this.sdk.uploadRegistrationFile(this.toJSON());
+      const txHash = await this.sdk.chain.setAgentURI(
+        this.sdk.identityRegistry,
+        this.sdk.identityRegistryAbi,
+        agentTokenId,
+        uri,
+      );
+
+      return new TransactionHandle<RegistrationResult>(txHash, this.sdk.chain, async () => {
+        this.registrationFile.agentURI = uri;
+        this.touch();
+        return { agentId, agentURI: uri };
+      });
+    }
+
+    const registrationTx = await this.sdk.submitRegister("");
+    return new TransactionHandle<RegistrationResult>(registrationTx.txHash, this.sdk.chain, async (receipt) => {
+      const parsed = this.sdk.chain.parseRegisteredAgentId(receipt);
+      if (parsed === undefined) {
+        throw new Error("Unable to determine registered agent ID from transaction receipt");
+      }
+
+      const agentId = `${this.sdk.chainId}:${parsed}`;
+      this.registrationFile.agentId = agentId;
+      this.touch();
+
+      const uri = await this.sdk.uploadRegistrationFile(this.toJSON());
+      const uriTxHash = await this.sdk.chain.setAgentURI(
+        this.sdk.identityRegistry,
+        this.sdk.identityRegistryAbi,
+        BigInt(parsed),
+        uri,
+      );
+      await this.sdk.chain.waitForTransaction(uriTxHash);
+
+      this.registrationFile.agentURI = uri;
+      this.touch();
+      return { agentId, agentURI: uri };
+    });
   }
 
   setAgentUri(uri: string): this {

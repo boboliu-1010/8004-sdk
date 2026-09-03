@@ -20,6 +20,9 @@ CID = str  # IPFS CID (if used)
 Timestamp = int  # unix seconds
 IdemKey = str  # idempotency key for write ops
 
+ERC8004_REGISTRATION_TYPE = "https://eips.ethereum.org/EIPS/eip-8004#registration-v1"
+TRC8004_REGISTRATION_TYPE = "https://github.com/tronprotocol/tips/blob/master/tip-8004.md#registration-v1"
+
 
 class EndpointType(Enum):
     """Types of endpoints that agents can advertise."""
@@ -41,7 +44,7 @@ class TrustModel(Enum):
 @dataclass
 class Endpoint:
     """Represents an agent endpoint."""
-    type: EndpointType
+    type: Union[EndpointType, str]
     value: str  # endpoint value (URL, name, DID, ENS)
     meta: Dict[str, Any] = field(default_factory=dict)  # optional metadata
 
@@ -64,25 +67,33 @@ class RegistrationFile:
     x402support: bool = False  # Binary flag for x402 payment support
     metadata: Dict[str, Any] = field(default_factory=dict)  # arbitrary, SDK-managed
     updatedAt: Timestamp = field(default_factory=lambda: int(datetime.now().timestamp()))
+    registrations: List[Dict[str, Any]] = field(default_factory=list)
+    registrationType: Optional[str] = None
 
     def __str__(self) -> str:
         """String representation as JSON."""
         # Use stored registry info if available
         chain_id = getattr(self, '_chain_id', None)
         registry_address = getattr(self, '_registry_address', None)
-        return json.dumps(self.to_dict(chain_id, registry_address), indent=2, default=str)
+        chain_type = getattr(self, '_chain_type', None)
+        return json.dumps(self.to_dict(chain_id, registry_address, chain_type), indent=2, default=str)
     
     def __repr__(self) -> str:
         """Developer representation."""
         return f"RegistrationFile(agentId={self.agentId}, agentURI={self.agentURI}, name={self.name})"
     
-    def to_dict(self, chain_id: Optional[int] = None, identity_registry_address: Optional[str] = None) -> Dict[str, Any]:
+    def to_dict(
+        self,
+        chain_id: Optional[int] = None,
+        identity_registry_address: Optional[str] = None,
+        chain_type: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         # Build endpoints array
         endpoints = []
         for endpoint in self.endpoints:
             endpoint_dict = {
-                "name": endpoint.type.value,
+                "name": endpoint.type.value if isinstance(endpoint.type, EndpointType) else endpoint.type,
                 "endpoint": endpoint.value,
                 **endpoint.meta
             }
@@ -92,17 +103,24 @@ class RegistrationFile:
         # It's now a reserved on-chain metadata key managed via Agent.setWallet().
         
         # Build registrations array
-        registrations = []
-        if self.agentId:
+        registrations = [dict(registration) for registration in self.registrations]
+        if not registrations and self.agentId and chain_id is not None and identity_registry_address:
             agent_id_int = int(self.agentId.split(":")[-1]) if ":" in self.agentId else int(self.agentId)
-            agent_registry = f"eip155:{chain_id}:{identity_registry_address}" if chain_id and identity_registry_address else "eip155:1:{identityRegistry}"
             registrations.append({
                 "agentId": agent_id_int,
-                "agentRegistry": agent_registry
+                "agentRegistry": f"eip155:{chain_id}:{identity_registry_address}"
             })
         
+        registration_type = self.registrationType or ERC8004_REGISTRATION_TYPE
+        if chain_type:
+            registration_type = (
+                TRC8004_REGISTRATION_TYPE
+                if chain_type.lower() == "tron"
+                else ERC8004_REGISTRATION_TYPE
+            )
+
         return {
-            "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+            "type": registration_type,
             "name": self.name,
             "description": self.description,
             "image": self.image,
@@ -126,7 +144,10 @@ class RegistrationFile:
                 # Skip agentWallet endpoints as they're handled separately via walletAddress field
                 continue
             
-            ep_type = EndpointType(name)
+            try:
+                ep_type: Union[EndpointType, str] = EndpointType(name)
+            except ValueError:
+                ep_type = name
             ep_value = ep_data["endpoint"]
             ep_meta = {k: v for k, v in ep_data.items() if k not in ["name", "endpoint"]}
             endpoints.append(Endpoint(type=ep_type, value=ep_value, meta=ep_meta))
@@ -147,6 +168,8 @@ class RegistrationFile:
             walletAddress=data.get("walletAddress"),
             walletChainId=data.get("walletChainId"),
             endpoints=endpoints,
+            registrations=[dict(registration) for registration in (data.get("registrations") or [])],
+            registrationType=data.get("type"),
             trustModels=trust_models,
             active=data.get("active", False),
             x402support=data.get("x402Support", data.get("x402support", False)),  # Handle both camelCase and lowercase

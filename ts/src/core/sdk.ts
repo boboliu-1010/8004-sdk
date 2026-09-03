@@ -109,6 +109,7 @@ export class SDK {
       description: input.description,
       image: input.image,
       endpoints: [],
+      registrations: [],
       tags: [],
       metadata: {},
       supportedTrust: [],
@@ -148,6 +149,7 @@ export class SDK {
       description: summary?.description ?? "",
       image: summary?.image,
       endpoints: [],
+      registrations: [],
       tags: [],
       metadata: {},
       supportedTrust: [],
@@ -163,6 +165,7 @@ export class SDK {
         registrationFile.description = hydrated.description ?? registrationFile.description;
         registrationFile.image = hydrated.image ?? registrationFile.image;
         registrationFile.endpoints = hydrated.endpoints ?? registrationFile.endpoints;
+        registrationFile.registrations = hydrated.registrations ?? registrationFile.registrations;
         registrationFile.tags = hydrated.tags ?? registrationFile.tags;
         registrationFile.metadata = hydrated.metadata ?? registrationFile.metadata;
         registrationFile.supportedTrust = hydrated.supportedTrust ?? registrationFile.supportedTrust;
@@ -190,17 +193,32 @@ export class SDK {
       const res = await fetch(target, { method: "GET" });
       if (!res.ok) return undefined;
       const json = await res.json();
-      const rf = json as Partial<RegistrationFile>;
+      if (!json || typeof json !== "object") return undefined;
+      const rf = json as Partial<RegistrationFile> & {
+        type?: string;
+        services?: RegistrationFile["endpoints"];
+        x402Support?: boolean;
+      };
       return {
+        registrationType: typeof rf.type === "string" ? rf.type : undefined,
         name: typeof rf.name === "string" ? rf.name : undefined,
         description: typeof rf.description === "string" ? rf.description : undefined,
         image: typeof rf.image === "string" ? rf.image : undefined,
-        endpoints: Array.isArray(rf.endpoints) ? rf.endpoints : undefined,
+        endpoints: Array.isArray(rf.services)
+          ? rf.services
+          : Array.isArray(rf.endpoints)
+            ? rf.endpoints
+            : undefined,
+        registrations: Array.isArray(rf.registrations) ? rf.registrations : undefined,
         tags: Array.isArray(rf.tags) ? rf.tags : undefined,
         metadata: typeof rf.metadata === "object" && rf.metadata ? rf.metadata : undefined,
         supportedTrust: Array.isArray(rf.supportedTrust) ? rf.supportedTrust : undefined,
         active: typeof rf.active === "boolean" ? rf.active : undefined,
-        x402support: typeof rf.x402support === "boolean" ? rf.x402support : undefined,
+        x402support: typeof rf.x402Support === "boolean"
+          ? rf.x402Support
+          : typeof rf.x402support === "boolean"
+            ? rf.x402support
+            : undefined,
       };
     } catch {
       return undefined;
@@ -211,7 +229,35 @@ export class SDK {
     if (!this.ipfsUploader) {
       throw new Error("No ipfsUploader configured. Pass SDKConfig.ipfsUploader to use registerIPFS().");
     }
-    return await this.ipfsUploader(JSON.stringify(registrationFile, null, 2));
+
+    let registrations = registrationFile.registrations ?? [];
+    if (registrations.length === 0 && registrationFile.agentId) {
+      const agentId = Number(registrationFile.agentId.split(":").at(-1));
+      if (Number.isSafeInteger(agentId) && agentId >= 0) {
+        registrations = [{
+          agentId,
+          agentRegistry: `eip155:${this.chainId}:${this.identityRegistry}`,
+        }];
+      }
+    }
+
+    const wireRegistration = {
+      type: this.chainType === "tron"
+        ? "https://github.com/tronprotocol/tips/blob/master/tip-8004.md#registration-v1"
+        : "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+      name: registrationFile.name,
+      description: registrationFile.description,
+      image: registrationFile.image,
+      services: registrationFile.endpoints,
+      registrations,
+      supportedTrust: registrationFile.supportedTrust,
+      active: registrationFile.active,
+      x402Support: registrationFile.x402support,
+      updatedAt: registrationFile.updatedAt,
+      tags: registrationFile.tags,
+      metadata: registrationFile.metadata,
+    };
+    return await this.ipfsUploader(JSON.stringify(wireRegistration, null, 2));
   }
 
   async submitRegister(agentURI?: string, metadata?: MetadataEntry[]): Promise<TransactionHandle<RegistrationResult>> {

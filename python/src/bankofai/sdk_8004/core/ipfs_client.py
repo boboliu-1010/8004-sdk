@@ -333,9 +333,20 @@ class IPFSClient:
         json_str = json.dumps(data, indent=2)
         return self.add(json_str, **kwargs)
 
-    def addRegistrationFile(self, registrationFile: "RegistrationFile", chainId: Optional[int] = None, identityRegistryAddress: Optional[str] = None, **kwargs) -> str:
+    def addRegistrationFile(
+        self,
+        registrationFile: "RegistrationFile",
+        chainId: Optional[int] = None,
+        identityRegistryAddress: Optional[str] = None,
+        chainType: Optional[str] = None,
+        **kwargs,
+    ) -> str:
         """Add registration file to IPFS and return CID."""
-        data = registrationFile.to_dict(chain_id=chainId, identity_registry_address=identityRegistryAddress)
+        data = registrationFile.to_dict(
+            chain_id=chainId,
+            identity_registry_address=identityRegistryAddress,
+            chain_type=chainType,
+        )
         return self.add_json(data, file_name="agent-registration.json", **kwargs)
 
     def getRegistrationFile(self, cid: str) -> "RegistrationFile":
@@ -356,4 +367,3 @@ class IPFSClient:
         """Close IPFS client connection."""
         if hasattr(self.client, 'close'):
             self.client.close()
-
