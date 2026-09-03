@@ -1,7 +1,5 @@
-import type { Hex } from "viem";
-
 import type { MetadataEntry, RegistrationFile, RegistrationResult, SetWalletOptions } from "../models/types.js";
-import type { SDK } from "./sdk.js";
+import { signAgentWalletBinding, type SDK } from "./sdk.js";
 import { TransactionHandle } from "./transaction-handle.js";
 
 export class Agent {
@@ -227,16 +225,14 @@ export class Agent {
       return undefined;
     }
 
-    const ownerChain = await this.sdk.chain.ownerOf(this.sdk.identityRegistry, this.sdk.identityRegistryAbi, agentTokenId);
-    const ownerEvm = this.sdk.chain.toEvmAddress(ownerChain) as Hex;
     const deadline = BigInt(options.deadline ?? (Math.floor(Date.now() / 1000) + 60));
 
     let signature = options.signature;
     if (!signature) {
-      signature = await this.sdk.signAgentWalletBinding(
+      signature = await signAgentWalletBinding(
+        this.sdk,
         agentTokenId,
         addrEvm,
-        ownerEvm,
         deadline,
         options.newWalletSigner,
       );

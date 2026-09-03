@@ -665,12 +665,15 @@ export class TronAdapter implements ChainAdapter {
   constructor(rpcUrl: string, signer?: string | ExternalSigner, feeLimit: number = 120_000_000) {
     this.rpcUrl = rpcUrl;
     this.feeLimit = feeLimit;
-    this.tronWeb = new TronWeb({ fullHost: rpcUrl, privateKey: typeof signer === "string" ? signer : undefined });
+    this.tronWeb = new TronWeb({ fullHost: rpcUrl });
     this.readCaller = "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb";
     if (typeof signer === "string") {
       const addr = this.tronWeb.address.fromPrivateKey(signer);
       if (addr && typeof addr === "string") this.signerAddress = addr;
       this.readCaller = this.signerAddress || this.readCaller;
+      if (this.signerAddress) this.tronWeb.setAddress(this.signerAddress);
+      const signWithPrivateKey = this.tronWeb.trx.sign.bind(this.tronWeb.trx);
+      (this.tronWeb.trx as any).sign = (transaction: Record<string, unknown>) => signWithPrivateKey(transaction as any, signer);
     } else if (signer) {
       this.signerAddress = this.toChainAddress(signer.address);
       this.readCaller = this.signerAddress;
