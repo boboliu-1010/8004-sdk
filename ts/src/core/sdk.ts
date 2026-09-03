@@ -1,5 +1,6 @@
 import chainsJson from "../../resource/chains.json" with { type: "json" };
-import { keccak256, toBytes, type Abi, type Hex } from "viem";
+import { keccak256, recoverTypedDataAddress, toBytes, type Abi, type Hex } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 import { Agent } from "./agent.js";
 import { EvmAdapter, resolveChainFromConfig, TRON_CHAIN_IDS, TronAdapter, type ChainAdapter } from "./chains.js";
@@ -35,8 +36,9 @@ export class SDK {
   readonly network: string;
   readonly rpcUrl: string;
   readonly chainId: number;
-  readonly signer?: string | ExternalSigner;
   readonly feeLimit: number;
+
+  readonly #signer?: string | ExternalSigner;
 
   readonly identityRegistry: string;
   readonly reputationRegistry: string;
@@ -72,7 +74,7 @@ export class SDK {
     this.network = resolved.resolvedNetwork;
     this.rpcUrl = resolved.rpcUrl;
     this.chainId = resolved.resolvedChainId ?? config.chainId ?? (this.chainType === "evm" ? 97 : 1);
-    this.signer = config.signer;
+    this.#signer = config.signer;
     this.feeLimit = config.feeLimit ?? 120_000_000;
 
     this.identityRegistry = resolved.contracts.identityRegistry;
@@ -84,8 +86,8 @@ export class SDK {
     this.validationRegistryAbi = getValidationRegistryAbi(this.chainType) as Abi;
 
     this.chain = this.chainType === "evm"
-      ? new EvmAdapter(this.rpcUrl, this.chainId, this.signer)
-      : new TronAdapter(this.rpcUrl, this.signer, this.feeLimit);
+      ? new EvmAdapter(this.rpcUrl, this.chainId, config.signer)
+      : new TronAdapter(this.rpcUrl, config.signer, this.feeLimit);
     this.ipfsUploader = config.ipfsUploader;
 
     this.subgraphClients = new Map<number, SubgraphClient>();
@@ -236,6 +238,64 @@ export class SDK {
     if (evm === "0x0000000000000000000000000000000000000000") return undefined;
     if (wallet.toLowerCase() === "t9yd14nj9j7xab4dbgeix9h8unkkhxuwwb") return undefined;
     return this.chain.toChainAddress(wallet);
+  }
+
+  async signAgentWalletBinding(
+    agentId: bigint,
+    newWallet: string,
+    owner: string,
+    deadline: bigint,
+    signerOverride?: string | ExternalSigner,
+  ): Promise<Hex> {
+    const newWalletAddress = this.chain.toEvmAddress(newWallet) as Hex;
+    const ownerAddress = this.chain.toEvmAddress(owner) as Hex;
+    const domain = {
+      name: "ERC8004IdentityRegistry",
+      version: "1",
+      chainId: this.getTypedDataChainId(),
+      verifyingContract: this.chain.toEvmAddress(this.identityRegistry) as Hex,
+    } as const;
+    const types = {
+      AgentWalletSet: [
+        { name: "agentId", type: "uint256" },
+        { name: "newWallet", type: "address" },
+        { name: "owner", type: "address" },
+        { name: "deadline", type: "uint256" },
+      ],
+    } as const;
+    const message = { agentId, newWallet: newWalletAddress, owner: ownerAddress, deadline } as const;
+    const signer = signerOverride ?? this.#signer;
+    if (!signer) {
+      throw new Error("New wallet signature is required. Provide options.newWalletSigner or options.signature.");
+    }
+
+    let signerAddress: string;
+    let signature: Hex;
+    if (typeof signer === "string") {
+      const normalizedKey = (signer.startsWith("0x") ? signer : `0x${signer}`) as Hex;
+      const account = privateKeyToAccount(normalizedKey);
+      signerAddress = account.address;
+      signature = await account.signTypedData({ domain, types, primaryType: "AgentWalletSet", message });
+    } else {
+      signerAddress = this.chain.toEvmAddress(signer.address);
+      if (!signer.signTypedData) throw new Error("External signer does not support typed-data signing");
+      signature = await signer.signTypedData({ domain, types, primaryType: "AgentWalletSet", message });
+    }
+    if (signerAddress.toLowerCase() !== newWalletAddress.toLowerCase()) {
+      throw new Error(`newWalletSigner address (${signerAddress}) does not match newWallet (${newWalletAddress}).`);
+    }
+
+    const recovered = await recoverTypedDataAddress({
+      domain,
+      types,
+      primaryType: "AgentWalletSet",
+      message,
+      signature,
+    });
+    if (recovered.toLowerCase() !== newWalletAddress.toLowerCase()) {
+      throw new Error(`Signature verification failed: recovered ${recovered}, expected ${newWalletAddress}`);
+    }
+    return signature;
   }
 
   async getAgentURI(agentId: string | number): Promise<string> {

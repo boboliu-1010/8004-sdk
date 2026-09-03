@@ -115,3 +115,14 @@ test("setWallet uses typed-data signing exposed by an external signer", async ()
   assert.equal(typedDataSigned, true);
   assert.equal(tx?.txHash, "0xwallet");
 });
+
+test("SDK does not expose signer credentials as a public property", () => {
+  const sdk = new SDK({
+    network: "base",
+    rpcUrl: "http://unused.invalid",
+    signer: "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  });
+
+  assert.equal("signer" in sdk, false);
+  assert.equal(JSON.stringify(sdk).includes("0123456789abcdef"), false);
+});

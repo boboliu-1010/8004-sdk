@@ -1,7 +1,6 @@
-import { recoverTypedDataAddress, type Hex } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
+import type { Hex } from "viem";
 
-import type { ExternalSigner, MetadataEntry, RegistrationFile, RegistrationResult, SetWalletOptions } from "../models/types.js";
+import type { MetadataEntry, RegistrationFile, RegistrationResult, SetWalletOptions } from "../models/types.js";
 import type { SDK } from "./sdk.js";
 import { TransactionHandle } from "./transaction-handle.js";
 
@@ -230,67 +229,17 @@ export class Agent {
 
     const ownerChain = await this.sdk.chain.ownerOf(this.sdk.identityRegistry, this.sdk.identityRegistryAbi, agentTokenId);
     const ownerEvm = this.sdk.chain.toEvmAddress(ownerChain) as Hex;
-    const verifyingContract = this.sdk.chain.toEvmAddress(this.sdk.identityRegistry) as Hex;
-    const chainId = this.sdk.getTypedDataChainId();
     const deadline = BigInt(options.deadline ?? (Math.floor(Date.now() / 1000) + 60));
-
-    const domain = {
-      name: "ERC8004IdentityRegistry",
-      version: "1",
-      chainId,
-      verifyingContract,
-    } as const;
-    const types = {
-      AgentWalletSet: [
-        { name: "agentId", type: "uint256" },
-        { name: "newWallet", type: "address" },
-        { name: "owner", type: "address" },
-        { name: "deadline", type: "uint256" },
-      ],
-    } as const;
-    const message = {
-      agentId: agentTokenId,
-      newWallet: addrEvm as Hex,
-      owner: ownerEvm,
-      deadline,
-    } as const;
 
     let signature = options.signature;
     if (!signature) {
-      const walletSigner = options.newWalletSigner ?? this.sdk.signer;
-      if (!walletSigner) {
-        throw new Error("New wallet signature is required. Provide options.newWalletSigner or options.signature.");
-      }
-
-      if (typeof walletSigner === "string") {
-        const normalizedKey = (walletSigner.startsWith("0x") ? walletSigner : `0x${walletSigner}`) as Hex;
-        const account = privateKeyToAccount(normalizedKey);
-        if (account.address.toLowerCase() !== addrEvm.toLowerCase()) {
-          throw new Error(`newWalletSigner address (${account.address}) does not match newWallet (${addrEvm}).`);
-        }
-        signature = await account.signTypedData({ domain, types, primaryType: "AgentWalletSet", message });
-      } else {
-        const externalSigner = walletSigner as ExternalSigner;
-        const signerAddress = this.sdk.chain.toEvmAddress(externalSigner.address);
-        if (signerAddress.toLowerCase() !== addrEvm.toLowerCase()) {
-          throw new Error(`newWalletSigner address (${signerAddress}) does not match newWallet (${addrEvm}).`);
-        }
-        if (!externalSigner.signTypedData) {
-          throw new Error("External signer does not support typed-data signing");
-        }
-        signature = await externalSigner.signTypedData({ domain, types, primaryType: "AgentWalletSet", message });
-      }
-
-      const recovered = await recoverTypedDataAddress({
-        domain,
-        types,
-        primaryType: "AgentWalletSet",
-        message,
-        signature,
-      });
-      if (recovered.toLowerCase() !== addrEvm.toLowerCase()) {
-        throw new Error(`Signature verification failed: recovered ${recovered}, expected ${addrEvm}`);
-      }
+      signature = await this.sdk.signAgentWalletBinding(
+        agentTokenId,
+        addrEvm,
+        ownerEvm,
+        deadline,
+        options.newWalletSigner,
+      );
     }
 
     const txHash = await this.sdk.chain.setAgentWallet(
